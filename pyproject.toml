@@ -29,6 +29,7 @@ requires = [
 [tool.ruff]
 line-length = 100
 include = ["*.py"]
+exclude = ["old/*"]
 
 [tool.ruff.format]
 quote-style = "double"
