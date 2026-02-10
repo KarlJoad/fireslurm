@@ -57,7 +57,6 @@ def build_argparse() -> argparse.ArgumentParser:
         type=Path,
         help=inspect.cleandoc("""Path to the simulation disk image."""),
     )
-    # TODO: Add validation that this is a readable & executable file
     parser.add_argument(
         "sim_prog",
         type=Path,
@@ -144,6 +143,19 @@ def validate_sim_img(sim_img: Path) -> bool:
     )
 
 
+def validate_sim_prog(sim_prog: Path) -> bool:
+    """
+    Return True if the SIM_PROG program for Firesim to run as the top-level
+    program is in a valid configuration to use.
+    """
+    return all(
+        [
+            validate.path_is_readable_file(sim_prog),
+            validate.path_is_executable_file(sim_prog),
+        ]
+    )
+
+
 def validate_args(args: argparse.Namespace) -> bool:
     """
     Validate that the comand line arguments, ARGS, are well-formed for the rest
@@ -155,6 +167,7 @@ def validate_args(args: argparse.Namespace) -> bool:
             validate_sim_config(args.sim_config),
             validate_overlay(args.overlay_path),
             validate_sim_img(args.sim_img),
+            validate_sim_prog(args.sim_prog),
         ]
     )
 
