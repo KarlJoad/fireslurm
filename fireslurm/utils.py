@@ -62,6 +62,11 @@ def extend_path(env_var: str, vals: List[Union[str, Path]], sep: str = os.pathse
     return (old_val, os.environ.get(env_var, ""))
 
 
+# Should all subprocess commands be executed as "dry-run" commands or should
+# they go through as real commands and actually do things?
+dry_run: bool = False
+
+
 def run_cmd(cmd) -> Union[subprocess.CompletedProcess, None]:
     """
     Potentially run CMD depending if the user requested a dry run.

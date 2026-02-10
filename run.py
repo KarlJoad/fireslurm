@@ -25,11 +25,6 @@ import fireslurm.utils as utils
 import fireslurm.validation as validate
 
 
-# Should all subprocess commands be executed as "dry-run" commands or should
-# they go through as real commands and actually do things?
-dry_run: bool = False
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -389,8 +384,7 @@ def build_firesim_cmd(
 def main() -> None:
     parser = build_argparse()
     args = parser.parse_args()
-    global dry_run
-    dry_run = args.dry_run
+    utils.dry_run = args.dry_run
     logging.basicConfig(
         format="%(levelname)s:%(name)s:%(funcName)s:%(lineno)d:%(message)s",
         level=logging.DEBUG if args.verbose > 0 else logging.INFO,
