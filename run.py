@@ -63,7 +63,6 @@ def build_argparse() -> argparse.ArgumentParser:
         help=inspect.cleandoc("""Path to the program to run at the top-level
         by Firesim."""),
     )
-    # TODO: Add validation that this is a readable & writable dir
     parser.add_argument(
         "log_dir",
         type=Path,
@@ -156,6 +155,20 @@ def validate_sim_prog(sim_prog: Path) -> bool:
     )
 
 
+def validate_log_dir(log_dir: Path) -> bool:
+    """
+    Return True if LOG_DIR is a valid logging directory for FireSlurm and
+    FireSim.
+    Return False otherwise.
+    """
+    return all(
+        [
+            validate.path_is_readable_dir(log_dir),
+            validate.path_is_writable_dir(log_dir),
+        ]
+    )
+
+
 def validate_args(args: argparse.Namespace) -> bool:
     """
     Validate that the comand line arguments, ARGS, are well-formed for the rest
@@ -168,6 +181,7 @@ def validate_args(args: argparse.Namespace) -> bool:
             validate_overlay(args.overlay_path),
             validate_sim_img(args.sim_img),
             validate_sim_prog(args.sim_prog),
+            validate_log_dir(args.log_dir),
         ]
     )
 

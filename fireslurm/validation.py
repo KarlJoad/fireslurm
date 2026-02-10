@@ -23,6 +23,26 @@ def path_is_readable_dir(dir: Path) -> bool:
     )
 
 
+def path_is_writable_dir(dir: Path) -> bool:
+    """
+    Return True if DIR exists, is a directory, and writable.
+
+    NOTE: A directory being writable does NOT NECESSARILY mean that it is
+    readable or executable (`ls`-able)!
+
+    NOTE: This implementation has a TOCTOU "vulnerability". Be careful with
+    multiple processes/threads accessing/working with these files!
+    """
+    logger.debug(f"Validating that {dir=!s} is a writable directory!")
+    return all(
+        [
+            dir.exists(),
+            dir.is_dir(),
+            os.access(dir, os.W_OK),
+        ]
+    )
+
+
 def path_is_readable_file(f: Path) -> bool:
     """
     Return True if DIR exists, is a regular file, and readable.
