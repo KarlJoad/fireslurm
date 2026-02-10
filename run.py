@@ -12,7 +12,6 @@ if sys.version_info[0] < 3:
 import argparse
 import logging
 import signal
-import subprocess
 import os
 from pathlib import Path
 from typing import List, Union
@@ -307,21 +306,6 @@ def update_log_files(log_dir: Path, log_name: str) -> Path:
     return latest_log
 
 
-def run_cmd(cmd) -> Union[subprocess.CompletedProcess, None]:
-    """
-    Potentially run CMD depending if the user requested a dry run.
-    If the `dry_run` global flag is True, then the command that woul d be run is
-    simply logged.
-    If the `dry_run` is False, then actually run the program.
-    """
-    global dry_run
-    if dry_run:
-        logger.warning(f"Dry-Running {cmd=!s}")
-        return None
-    else:
-        return subprocess.run(cmd)
-
-
 def flash_fpga(sim_config: Path) -> None:
     """
     Flash the FPGA with the Firesim bitstream in SIM_CONFIG.
@@ -340,9 +324,9 @@ def flash_fpga(sim_config: Path) -> None:
         "0000:01:00:0",
     ]
     logger.debug(f"Flashing the FPGA. {FLASH_CMD=!s}")
-    run_cmd(FLASH_CMD)
+    utils.run_cmd(FLASH_CMD)
     logger.debug(f"Changing PCIe FPGA Permissions. {PCIE_PERMS_CMD=!s}")
-    run_cmd(PCIE_PERMS_CMD)
+    utils.run_cmd(PCIE_PERMS_CMD)
 
 
 def overlay_disk_image(overlay_path: Path, sim_img: Path) -> None:
@@ -462,7 +446,7 @@ def main() -> None:
         ],
     )
     # tty.intr = "^]"
-    run_cmd(fsim_cmd)
+    utils.run_cmd(fsim_cmd)
 
     # Restore LD_LIBRARY_PATH to its previous value
     # XXX: Similarly, we must restore $LD_LIBRARY_PATH BEFORE we call stty!

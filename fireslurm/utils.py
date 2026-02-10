@@ -4,6 +4,7 @@ import os
 import logging
 import curses
 import sys
+import subprocess
 
 
 logger = logging.getLogger(__name__)
@@ -59,3 +60,18 @@ def extend_path(env_var: str, vals: List[Union[str, Path]], sep: str = os.pathse
     os.environ[env_var] = sep.join(vals_to_add) + sep + old_val
     logger.debug(f"New state of {env_var}: {os.environ.get(env_var, '')}")
     return (old_val, os.environ.get(env_var, ""))
+
+
+def run_cmd(cmd) -> Union[subprocess.CompletedProcess, None]:
+    """
+    Potentially run CMD depending if the user requested a dry run.
+    If the `dry_run` global flag is True, then the command that woul d be run is
+    simply logged.
+    If the `dry_run` is False, then actually run the program.
+    """
+    global dry_run
+    if dry_run:
+        logger.warning(f"Dry-Running {cmd=!s}")
+        return None
+    else:
+        return subprocess.run(cmd)
