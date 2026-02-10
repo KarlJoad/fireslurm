@@ -271,6 +271,10 @@ def overlay_disk_image(overlay_path: Path, sim_img: Path) -> None:
     """
     Overlay the file system tree in OVERLAY_PATH to SIM_IMG.
     """
+    logger.info(f"Overlaying contents of {overlay_path} onto {sim_img}")
+    assert (overlay_path / "firesim.sh").exists(), (
+        "Firesim.sh script must be made before overlaying disk image"
+    )
     pass
 
 
