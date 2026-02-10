@@ -19,6 +19,7 @@ from typing import List, Union
 import stat
 import inspect
 import textwrap
+from datetime import datetime
 
 import fireslurm.utils as utils
 import fireslurm.validation as validate
@@ -241,11 +242,33 @@ def write_firesim_sh(overlay_path: Path, cmd: Union[List[str], List[Path]]) -> P
     return FIRESIM_SH
 
 
-def update_log_files(log_dir: Path, log_name: str) -> None:
+def update_log_files(log_dir: Path, log_name: str) -> Path:
     """
     Update the log files in LOG_DIR for this Firesim run.
+    Return the path to the latest log directory.
     """
-    pass
+    logger.debug("Updating log files for current run")
+    if not log_dir.exists():
+        log_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create a new log file
+    dt = datetime.now()
+    log_name = log_name + dt.strftime("%Y-%m-%d%H%M%S")
+    current_run_log = log_dir / log_name
+    current_run_log.mkdir(exist_ok=False)
+
+    # Remove the previous "latest" run, because we are about to do a new run
+    # If latest did not exist before, then we don't need to do anything.
+    latest_log = log_dir / "latest"
+    try:
+        os.remove(latest_log)
+    except FileNotFoundError as e:
+        logger.info(f"{e} {latest_log}. Not removing.")
+
+    # Register the now-current run as the latest log
+    os.symlink(src=current_run_log, dst=latest_log)
+    logger.info(f"Marked {current_run_log} as latest in {log_dir}")
+    return latest_log
 
 
 def flash_fpga(sim_config: Path) -> None:
@@ -306,7 +329,7 @@ def main() -> None:
     # to run when it finishes booting.
     write_firesim_sh(args.overlay_path, args.cmd)
 
-    update_log_files(args.log_dir, args.run_log_name)
+    _log_dir_latest = update_log_files(args.log_dir, args.run_log_name)
 
     logger.info("Begin infrasetup")
     # We must block SIGINT during this process because this is a "delicate"
