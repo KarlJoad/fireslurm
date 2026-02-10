@@ -39,7 +39,6 @@ def build_argparse() -> argparse.ArgumentParser:
         # color=utils.supports_color() and utils.wants_color(),
     )
     # TODO: This litany of positional flags should be replaced by long-arg flags.
-    # TODO: Add validation that this has the proper format
     parser.add_argument(
         "sim_config",
         type=Path,
@@ -96,6 +95,33 @@ def build_argparse() -> argparse.ArgumentParser:
     return parser
 
 
+def validate_sim_config(sim_config: Path) -> bool:
+    """
+    Return True if the SIM_CONFIG is a valid directory to use with fireslurm.
+    Return False otherwise.
+
+    A valid simulation configuration directory is one with the following
+    hierarchy:
+    stable
+    ├── description.txt
+    ├── FireSim-xilinx_vcu118
+    ├── *.so.*
+    └── xilinx_vcu118
+       ├── firesim.bit
+       ├── firesim.mcs
+       ├── firesim_secondary.mcs
+       └── metadata
+    """
+    return all(
+        [
+            validate.path_is_readable_dir(sim_config),
+            validate.path_is_readable_dir(sim_config / "xilinx_vcu118"),
+            validate.path_is_executable_file(sim_config / "FireSim-xilinx_vcu118"),
+            validate.path_is_readable_file(sim_config / "xilinx_vcu118" / "firesim.bit"),
+        ]
+    )
+
+
 def validate_overlay(overlay_path: Path) -> bool:
     """
     Return True if the OVERLAY_PATH is a valid overlay to use with Firesim.
@@ -111,6 +137,7 @@ def validate_args(args: argparse.Namespace) -> bool:
     """
     return all(
         [
+            validate_sim_config(args.sim_config),
             validate_overlay(args.overlay_path),
         ]
     )
