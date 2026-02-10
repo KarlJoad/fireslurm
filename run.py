@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import List, Union
 import stat
 import inspect
+import textwrap
 
 import fireslurm.utils as utils
 import fireslurm.validation as validate
@@ -217,10 +218,25 @@ def write_firesim_sh(overlay_path: Path, cmd: Union[List[str], List[Path]]) -> P
     Returns the path to the "firesim.sh" script.
     """
     logger.debug("Building firesim.sh")
-    FIRESIM_SH = "firesim.sh"
-    with open(FIRESIM_SH, "w") as f:
-        f.write("#!/bin/sh")
+    FIRESIM_SH = overlay_path / "firesim.sh"
     perms = stat.S_IFREG | stat.S_IRWXU | stat.S_IRWXG | stat.S_IROTH
+    cmd = " ".join(cmd)
+    logger.debug(f"Command to run as seen by firesim.sh: {cmd=!r}")
+    contents = textwrap.dedent(f"""\
+    #!/bin/sh
+    set -x
+    sleep 1
+    cat \"/bin/config-$(uname -r)\"
+
+    firesim-start-trigger
+    {cmd}
+    firesim-end-trigger
+
+    poweroff
+    """)
+    logger.debug(f"Writing Firesim init script to {FIRESIM_SH}")
+    with open(FIRESIM_SH, "w") as f:
+        f.write(contents)
     os.chmod(FIRESIM_SH, perms)
     return FIRESIM_SH
 
