@@ -435,12 +435,18 @@ def main() -> None:
         args.log_dir,
         args.print_start,
     )
-    (old_ld_library_path, _) = utils.extend_path("LD_LIBRARY_PATH", ["HOME/yukon/firesim"])
+
     logger.warning("Changing SIGINT key to C-]!")
     os.system("stty intr ^]")
+    # XXX: You must change the SIGINT keychord with os.system BEFORE
+    # you extend $LD_LIBRARY_PATH! If you don't, you will end up with
+    # glibc errors from libc and the dynamic loader!
+    # stty: .../libc.so.6: version `GLIBC_2.38' not found (required by stty)
+    (old_ld_library_path, _) = utils.extend_path("LD_LIBRARY_PATH", ["HOME/yukon/firesim"])
     run_cmd(fsim_cmd)
 
     # Restore LD_LIBRARY_PATH to its previous value
+    # XXX: Similarly, we must restore $LD_LIBRARY_PATH BEFORE we call stty!
     os.environ["LD_LIBRARY_PATH"] = old_ld_library_path
     os.system("stty intr ^c")
     logger.warning("SIGINT key changed back to to C-c!")
