@@ -77,6 +77,15 @@ def build_argparse() -> argparse.ArgumentParser:
         This log file will be created beneath the provided log_dir."""),
     )
     parser.add_argument(
+        "-p",
+        "--print-start",
+        dest="print_start",
+        action="store",
+        default=-1,
+        help=inspect.cleandoc("""Clock cycle to begin emitting trace printing
+        from the core."""),
+    )
+    parser.add_argument(
         "cmd",
         nargs="+",
         help=inspect.cleandoc("""Commands & Flags (in shell syntax) to run
@@ -301,12 +310,50 @@ def overlay_disk_image(overlay_path: Path, sim_img: Path) -> None:
     pass
 
 
-def build_firesim_cmd(sim_config: Path, sim_img: Path, sim_prog: Path, log_dir: Path) -> List[str]:
+def build_firesim_cmd(
+    sim_config: Path, sim_img: Path, sim_prog: Path, log_dir: Path, print_start: int
+) -> List[str]:
     """
     Return a command string to run the Firesim simulation.
     NOTE: This is the command that the host runs to run the Firesim simulation.
     """
-    return []
+    cmd = [
+        "sudo",
+        f"{sim_config.resolve()}/FireSim-xilinx_vcu118",
+        "+permissive",
+        f"+blkdev0={sim_img.resolve()}",
+        f"+blkdev-log0={log_dir.resolve()}/blkdev-log0",
+        # XXX: +permissive-off MUST be followed by the binary to run!
+        "+permissive-off",
+        f"+prog0={sim_prog.resolve()}",
+        f"+dwarf-file-name={sim_prog.resolve()}-dwarf",
+        # "+blkdev1=${HOME}/yukon/yukon-br0-yukon-br.img",
+        # "+tracefile=TRACEFILE",
+        # "+trace-select=3",
+        # "+trace-start=ffffffff00008013",
+        # "+trace-end=ffffffff00010013",
+        # "+trace-output-format=0",
+        "+autocounter-readrate=100000000",
+        f"+autocounter-filename-base={log_dir.resolve()}/AUTOCOUNTERFILE",
+        f"+print-start={print_start}",
+        "+print-end=-1",
+        # This NIC information is mandatory, even if it is not used
+        "+macaddr0=00:12:6D:00:00:02",
+        "+niclog0=niclog0",
+        "+linklatency0=6405",
+        "+netbw0=200",
+        "+shmemportname0=default",
+        "+domain=0x0000",
+        "+bus=0x01",
+        "+device=0x00",
+        "+function=0x0",
+        "+bar=0x0",
+        "+pci-vendor=0x10ee",
+        "+pci-device=0x903f",
+        "+disable-asserts",
+    ]
+    logger.debug(f"Firesim command to run on host: {cmd=!s}")
+    return cmd
 
 
 def main() -> None:
@@ -350,6 +397,7 @@ def main() -> None:
         args.sim_img,
         args.sim_prog,
         args.log_dir,
+        args.print_start,
     )
     (old_ld_library_path, _) = utils.extend_path("LD_LIBRARY_PATH", ["HOME/yukon/firesim"])
     logger.warning("Changing SIGINT key to C-]!")
