@@ -105,6 +105,7 @@ def build_argparse() -> argparse.ArgumentParser:
     parser.add_argument(
         "-v",
         "--verbose",
+        dest="verbose",
         action="count",
         default=0,
         help=inspect.cleandoc("""
@@ -114,6 +115,7 @@ def build_argparse() -> argparse.ArgumentParser:
     parser.add_argument(
         "-n",
         "--dry-run",
+        dest="dry_run",
         action="store_true",
         default=False,
         help=inspect.cleandoc("""

@@ -58,6 +58,7 @@ def build_argparse() -> argparse.ArgumentParser:
     parser.add_argument(
         "-v",
         "--verbose",
+        dest="verbose",
         action="count",
         default=0,
         help=inspect.cleandoc("""
