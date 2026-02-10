@@ -46,8 +46,16 @@ def extend_path(env_var: str, vals: List[Union[str, Path]], sep: str = os.pathse
 
     Returns the a tuple with the (old, new) states of the environment variable.
     """
+
+    def val_to_str(v: Union[str, Path]) -> str:
+        if isinstance(v, str):
+            return v
+        elif isinstance(v, Path):
+            return str(v.resolve())
+
     logger.debug(f"Extending {env_var} with {vals}")
     old_val = os.environ.get(env_var, "")
-    os.environ[env_var] = sep.join(vals) + sep + old_val
+    vals_to_add = map(val_to_str, vals)
+    os.environ[env_var] = sep.join(vals_to_add) + sep + old_val
     logger.debug(f"New state of {env_var}: {os.environ.get(env_var, '')}")
     return (old_val, os.environ.get(env_var, ""))

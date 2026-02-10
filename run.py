@@ -442,7 +442,12 @@ def main() -> None:
     # you extend $LD_LIBRARY_PATH! If you don't, you will end up with
     # glibc errors from libc and the dynamic loader!
     # stty: .../libc.so.6: version `GLIBC_2.38' not found (required by stty)
-    (old_ld_library_path, _) = utils.extend_path("LD_LIBRARY_PATH", ["HOME/yukon/firesim"])
+    (old_ld_library_path, _) = utils.extend_path(
+        "LD_LIBRARY_PATH",
+        [
+            args.sim_config.resolve(),
+        ],
+    )
     run_cmd(fsim_cmd)
 
     # Restore LD_LIBRARY_PATH to its previous value
