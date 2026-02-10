@@ -25,6 +25,11 @@ import fireslurm.utils as utils
 import fireslurm.validation as validate
 
 
+# Should all subprocess commands be executed as "dry-run" commands or should
+# they go through as real commands and actually do things?
+dry_run: bool = False
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -100,6 +105,16 @@ def build_argparse() -> argparse.ArgumentParser:
                     How verbosely to log. This flag can be included multiple
                     times to increase the verbosity"""),
     )
+    parser.add_argument(
+        "-n",
+        "--dry-run",
+        action="store_true",
+        default=False,
+        help=inspect.cleandoc("""
+        Should all subcommands this program invokes be "dry-run"?
+        If set, the sub-commands will do nothing, but will be logged."""),
+    )
+
     return parser
 
 
@@ -280,6 +295,21 @@ def update_log_files(log_dir: Path, log_name: str) -> Path:
     return latest_log
 
 
+def run_cmd(cmd) -> Union[subprocess.CompletedProcess, None]:
+    """
+    Potentially run CMD depending if the user requested a dry run.
+    If the `dry_run` global flag is True, then the command that woul d be run is
+    simply logged.
+    If the `dry_run` is False, then actually run the program.
+    """
+    global dry_run
+    if dry_run:
+        logger.warning(f"Dry-Running {cmd=!s}")
+        return None
+    else:
+        return subprocess.run(cmd)
+
+
 def flash_fpga(sim_config: Path) -> None:
     """
     Flash the FPGA with the Firesim bitstream in SIM_CONFIG.
@@ -297,6 +327,10 @@ def flash_fpga(sim_config: Path) -> None:
         "/usr/local/bin/firesim-change-pcie-perms",
         "0000:01:00:0",
     ]
+    logger.debug(f"Flashing the FPGA. {FLASH_CMD=!s}")
+    run_cmd(FLASH_CMD)
+    logger.debug(f"Changing PCIe FPGA Permissions. {PCIE_PERMS_CMD=!s}")
+    run_cmd(PCIE_PERMS_CMD)
 
 
 def overlay_disk_image(overlay_path: Path, sim_img: Path) -> None:
@@ -359,6 +393,8 @@ def build_firesim_cmd(
 def main() -> None:
     parser = build_argparse()
     args = parser.parse_args()
+    global dry_run
+    dry_run = args.dry_run
     logging.basicConfig(
         format="%(levelname)s:%(name)s:%(funcName)s:%(lineno)d:%(message)s",
         level=logging.DEBUG if args.verbose > 0 else logging.INFO,
@@ -402,7 +438,7 @@ def main() -> None:
     (old_ld_library_path, _) = utils.extend_path("LD_LIBRARY_PATH", ["HOME/yukon/firesim"])
     logger.warning("Changing SIGINT key to C-]!")
     os.system("stty intr ^]")
-    # subprocess.run(fsim_cmd)
+    run_cmd(fsim_cmd)
 
     # Restore LD_LIBRARY_PATH to its previous value
     os.environ["LD_LIBRARY_PATH"] = old_ld_library_path
