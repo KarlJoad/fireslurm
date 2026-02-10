@@ -39,7 +39,6 @@ def build_argparse() -> argparse.ArgumentParser:
         prog="run.py",
         # TODO: Write custom usage thingy https://stackoverflow.com/a/75217910
         # Want to use programmatic usage, but want the "-- cmd [cmd ...]" to be generated
-        usage="%(prog)s [-h] [-v] [options] sim_config overlay_path sim_img sim_prog log_dir run_log_name -- cmd [cmd ...]",
         description="Run a Firesim simulation",
         epilog="Lovingly made by NCW, Atmn, and KGH.",
         add_help=True,
@@ -48,36 +47,48 @@ def build_argparse() -> argparse.ArgumentParser:
     )
     # TODO: This litany of positional flags should be replaced by long-arg flags.
     parser.add_argument(
-        "sim_config",
+        "--sim-config",
+        dest="sim_config",
+        required=True,
         type=Path,
         help=inspect.cleandoc("""Path to the simulation's configuration
         directory. This should include both the FireSim host-side program, the
         FPGA bitstream, and all relevant libraries needed."""),
     )
     parser.add_argument(
-        "overlay_path",
+        "--overlay-path",
+        dest="overlay_path",
+        required=True,
         type=Path,
         help=inspect.cleandoc("""Path to directory to overlay on top of
         simulation disk image."""),
     )
     parser.add_argument(
-        "sim_img",
+        "--sim-img",
+        dest="sim_img",
+        required=True,
         type=Path,
         help=inspect.cleandoc("""Path to the simulation disk image."""),
     )
     parser.add_argument(
-        "sim_prog",
+        "--sim-prog",
+        dest="sim_prog",
+        required=True,
         type=Path,
         help=inspect.cleandoc("""Path to the program to run at the top-level
         by Firesim."""),
     )
     parser.add_argument(
-        "log_dir",
+        "--log-dir",
+        dest="log_dir",
+        required=True,
         type=Path,
         help=inspect.cleandoc("""Desired path for all log files to appear in."""),
     )
     parser.add_argument(
-        "run_log_name",
+        "--run-log-name",
+        dest="run_log_name",
+        required=True,
         type=str,
         help=inspect.cleandoc("""Name that this run should be logged as.
         This log file will be created beneath the provided log_dir."""),
