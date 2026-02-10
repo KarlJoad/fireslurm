@@ -2,9 +2,40 @@ from typing import List, Union
 from pathlib import Path
 import os
 import logging
+import curses
+import sys
 
 
 logger = logging.getLogger(__name__)
+
+
+# Perhaps pull in colorama or supports-color?
+def supports_color() -> True:
+    """
+    Return True if the terminal supports color.
+    """
+    if sys.stdout.isatty() and "TERM" in os.environ:
+        try:
+            curses.setupterm()
+            # tigetnum('colors') returns the number of colors supported, or -1 if not supported
+            colors = curses.tigetnum("colors")
+            return colors >= 8  # Check for at least 8 colors (basic ANSI)
+        except curses.error:
+            pass
+    return False
+
+
+def wants_color() -> bool:
+    """
+    Return True if the user's environment variables specify that they want
+    ANSI escape code colors.
+    """
+    if os.getenv("PYTHON_COLORS", None) is not None:
+        return True
+    if os.getenv("NO_COLOR", None) is not None:
+        return False
+    if os.getenv("FORCE_COLOR", None) is not None:
+        return True
 
 
 def extend_path(env_var: str, vals: List[Union[str, Path]], sep: str = os.pathsep) -> str:

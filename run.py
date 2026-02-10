@@ -25,10 +25,6 @@ import fireslurm.utils as utils
 logger = logging.getLogger(__name__)
 
 
-    """
-    """
-
-
 def build_argparse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="run.py",
@@ -39,7 +35,7 @@ def build_argparse() -> argparse.ArgumentParser:
         epilog="Lovingly made by NCW, Atmn, and KGH.",
         add_help=True,
         # NOTE: color= added by 3.14
-        # color=True
+        # color=utils.supports_color() and utils.wants_color(),
     )
     # TODO: This litany of positional flags should be replaced by long-arg flags.
     # TODO: Add validation that this has the proper format
