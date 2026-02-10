@@ -1,5 +1,19 @@
 #!/usr/bin/env python3
 
+"""
+Run a FireSim simulation.
+
+This program sets up FireSim and runs it. This involves:
+  1. Copying files to a configuration directory.
+  2. Overlaying custom binaries into the FireSim disk image.
+  3. Flashing the FPGA.
+  4. Running the top-level FireSim simulation, which connects to the FPGA, does
+     all the host-side simulation (disks, networking, etc.), along with the
+     logging and assertion handling.
+
+NOTE: This script does ***NOT*** run inside the simulation!
+"""
+
 # fmt: off
 #SBATCH --error=slurm-%j.err
 # fmt: on

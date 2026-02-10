@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+"""
+Batch up and submit multiple run.py jobs to Slurm.
+
+This program sets up job submission directories for the jobs that are submitted
+to Slurm, so each run is kept isolated from one another. Eventually, Slurm will
+pick up the job and run the run.py script on a FireSim-enabled machine.
+"""
+
 import argparse
 import inspect
 import logging

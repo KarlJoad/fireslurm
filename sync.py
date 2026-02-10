@@ -1,5 +1,17 @@
 #!/usr/bin/env python3
 
+"""
+Synchronize a FireSim simulation directory for later FireSlurm use.
+
+By default, FireSim replaces its files on every "infrasetup". This can lead to
+issues when you want to check out older versions of everything the simulation is
+using (hardware, firmware, software).
+
+This tool takes the contents that FireSim installs on the simulation host with
+"infrasetup" and copies it to a simulation configuration directory that is
+versioned. This prevents FireSlurm from losing previous configurations.
+"""
+
 import argparse
 import inspect
 import logging
