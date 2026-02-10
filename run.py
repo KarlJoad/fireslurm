@@ -20,6 +20,7 @@ import stat
 import inspect
 
 import fireslurm.utils as utils
+import fireslurm.validation as validate
 
 
 logger = logging.getLogger(__name__)
@@ -46,7 +47,6 @@ def build_argparse() -> argparse.ArgumentParser:
         directory. This should include both the FireSim host-side program, the
         FPGA bitstream, and all relevant libraries needed."""),
     )
-    # TODO: Add validation that this is a readable directory
     parser.add_argument(
         "overlay_path",
         type=Path,
@@ -96,13 +96,24 @@ def build_argparse() -> argparse.ArgumentParser:
     return parser
 
 
+def validate_overlay(overlay_path: Path) -> bool:
+    """
+    Return True if the OVERLAY_PATH is a valid overlay to use with Firesim.
+    """
+    return validate.path_is_readable_dir(overlay_path)
+
+
 def validate_args(args: argparse.Namespace) -> bool:
     """
     Validate that the comand line arguments, ARGS, are well-formed for the rest
     so the rest of the program can just assume they are valid.
     Return True if all the ARGS are valid.
     """
-    return True
+    return all(
+        [
+            validate_overlay(args.overlay_path),
+        ]
+    )
 
 
 def write_firesim_sh(overlay_path: Path, cmd: Union[List[str], List[Path]]) -> Path:
