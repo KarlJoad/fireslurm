@@ -40,6 +40,7 @@
               buildInputs = with pkgs; [
                 pythonEnv
                 ty
+                pre-commit
 
                 # keep this line if you use bash
                 bashInteractive
