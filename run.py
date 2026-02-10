@@ -20,6 +20,7 @@ import stat
 import inspect
 import textwrap
 from datetime import datetime
+# import stty  # Comes from 3rd party
 
 import fireslurm.utils as utils
 import fireslurm.validation as validate
@@ -436,6 +437,7 @@ def main() -> None:
         args.print_start,
     )
 
+    # tty = stty.Stty(fd=0)
     logger.warning("Changing SIGINT key to C-]!")
     os.system("stty intr ^]")
     # XXX: You must change the SIGINT keychord with os.system BEFORE
@@ -448,11 +450,13 @@ def main() -> None:
             args.sim_config.resolve(),
         ],
     )
+    # tty.intr = "^]"
     run_cmd(fsim_cmd)
 
     # Restore LD_LIBRARY_PATH to its previous value
     # XXX: Similarly, we must restore $LD_LIBRARY_PATH BEFORE we call stty!
     os.environ["LD_LIBRARY_PATH"] = old_ld_library_path
+    # tty.intr = "^c"
     os.system("stty intr ^c")
     logger.warning("SIGINT key changed back to to C-c!")
 
