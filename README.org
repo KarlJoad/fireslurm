@@ -1,4 +1,16 @@
 #+TITLE: FireSlurm: FireSim and Slurm Play Together! 💘
 
+* Intended Workflow
+The intended workflow for FireSlurm is as follows:
+  1. Run ~firesim infrasetup~ once on the orchestration host to build and copy the simulator binaries, disk image, and bitstream to the simulation host.
+  2. Run ~sync.py~ on the simulation host to synchronize a configuration directory with the FireSim-copied pieces.
+  3. Run ~run.py~ on the simulation host to set up the FPGA, build a working/results directory, and run the simulator.
+     Note that this script takes similar actions as ~firesim infrasetup~, but it does it entirely *locally*.
+     It is included to make ~run.py~ idempotent.
+  4. Use ~batch.py~ on an Slurm- and NFS-enabled host to submit many ~run.py~ jobs to Slurm for queued running.
+
+*Only Step 1 needs to be done on the orchestration host!*
+This is a significant departure from how FireSim normally works, which requireds a constant connection between the orchestration and simulation host for FireSim to behave nicely.
+
 * Thanks
 Originally based on a set of scripts Nick Wanninger and Atmn Patel put together for testing Yukon.
