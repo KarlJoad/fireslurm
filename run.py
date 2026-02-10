@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import List, Union
 import stat
 import inspect
+import re
 
 import fireslurm.utils as utils
 import fireslurm.validation as validate
@@ -169,6 +170,30 @@ def validate_log_dir(log_dir: Path) -> bool:
     )
 
 
+def validate_run_log_name(run_log_name: str) -> bool:
+    """
+    Return True if RUN_LOG_NAME is a valid name for a run.
+    Return False otherwise.
+
+    In particular, this function ensures that runs hav enames that are valid for
+    POSIX file systems. Some special characters are disallowed, spaces are
+    discouraged, etc.
+    """
+    logger.debug(f"Validating that {run_log_name=!r} is a valid POSIX file name")
+    # Empty names and the bare path separator "/" are invalid run names.
+    if not run_log_name or os.pathsep in run_log_name:
+        return False
+    # NOTE: The use of regexps here to perform a "POSIX match" on the log name
+    # is not technically correct, nor robust. But it is good enough for our
+    # limited Fireslurm usage.
+    import re
+
+    if re.fullmatch(r"[a-zA-Z0-9.\-_]+", run_log_name):
+        return True
+    else:
+        return False
+
+
 def validate_args(args: argparse.Namespace) -> bool:
     """
     Validate that the comand line arguments, ARGS, are well-formed for the rest
@@ -182,6 +207,7 @@ def validate_args(args: argparse.Namespace) -> bool:
             validate_sim_img(args.sim_img),
             validate_sim_prog(args.sim_prog),
             validate_log_dir(args.log_dir),
+            validate_run_log_name(args.run_log_name),
         ]
     )
 
