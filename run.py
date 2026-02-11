@@ -275,7 +275,7 @@ def flash_fpga(sim_config: Path) -> None:
     # exit code of 0 and say it configured the FPGA successfully!
     FLASH_CMD = [
         "sudo",
-        "/usr/local/bin/firesim-xvsecctl-flash-fpga",
+        "firesim-xvsecctl-flash-fpga",
         "0x01",
         "0x00",
         "0x1",
@@ -283,7 +283,7 @@ def flash_fpga(sim_config: Path) -> None:
     ]
     PCIE_PERMS_CMD = [
         "sudo",
-        "/usr/local/bin/firesim-change-pcie-perms",
+        "firesim-change-pcie-perms",
         "0000:01:00:0",
     ]
     logger.debug(f"Flashing the FPGA. {FLASH_CMD=!s}")
