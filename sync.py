@@ -40,7 +40,7 @@ def build_argparse() -> argparse.ArgumentParser:
         help=inspect.cleandoc("""Name for this new FireSim configuration."""),
     )
     parser.add_argument(
-        "description",
+        "--description",
         type=str,
         help=inspect.cleandoc("""Description of the kind of Firechip simulation design this is."""),
     )
