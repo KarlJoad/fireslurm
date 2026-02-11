@@ -33,9 +33,11 @@ def build_argparse() -> argparse.ArgumentParser:
         add_help=True,
     )
     parser.add_argument(
-        "name",
+        "--config-name",
+        dest="config_name",
+        required=True,
         type=str,
-        help=inspect.cleandoc("""Name for this Firesim configuration."""),
+        help=inspect.cleandoc("""Name for this new FireSim configuration."""),
     )
     parser.add_argument(
         "description",
@@ -49,13 +51,6 @@ def build_argparse() -> argparse.ArgumentParser:
         type=Path,
         help=inspect.cleandoc("""Path to the configuration directory for Firesim
         and FireSlurm."""),
-    )
-    parser.add_argument(
-        "--config-name",
-        dest="config_name",
-        required=True,
-        type=str,
-        help=inspect.cleandoc("""Name for this new configuration."""),
     )
     parser.add_argument(
         "--infrasetup-target",
