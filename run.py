@@ -490,8 +490,17 @@ def main() -> None:
             uartlog.write(n_line)
         # Raise this error, which matches what subprocess.run(check=True) would
         # do.
-        if proc.returncode != 0:
-            raise subprocess.CalledProcessError
+        try:
+            # timeout is in seconds
+            proc.wait(timeout=5)
+            if proc.returncode != 0:
+                raise subprocess.CalledProcessError
+        except subprocess.TimeoutExpired:
+            # Ignoring the timeout is OK here, according to the docs.
+            # https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait
+            # We just use it so we can look at the returncode and throw some
+            # kind of error without blocking the writing/logging too much.
+            pass
 
     # Restore LD_LIBRARY_PATH to its previous value
     # XXX: Similarly, we must restore $LD_LIBRARY_PATH BEFORE we call stty!
