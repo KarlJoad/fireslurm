@@ -5,6 +5,7 @@ import logging
 import curses
 import sys
 import subprocess
+from contextlib import contextmanager
 
 
 logger = logging.getLogger(__name__)
@@ -80,3 +81,21 @@ def run_cmd(cmd) -> Union[subprocess.CompletedProcess, None]:
         return None
     else:
         return subprocess.run(cmd, check=True)
+
+
+@contextmanager
+def mount_img(img: Path, mountpoint: Path):
+    """
+    Attempt to mount IMG to MOUNTPOINT. If this is successful, then the dynamic
+    context (the contents of the with-block) are run with IMG mounted to
+    MOUNTPOINT.
+
+    If the mount or the contents of the block throw an exception, then the image
+    is sync-ed and unmounted before exiting.
+    """
+    try:
+        subprocess.run(["sudo", "mount", img.resolve(), mountpoint.resolve()], check=True)
+        yield
+    finally:
+        subprocess.run(["sync"])
+        subprocess.run(["sudo", "umount", mountpoint.resolve()])
