@@ -94,7 +94,9 @@ def mount_img(img: Path, mountpoint: Path):
     is sync-ed and unmounted before exiting.
     """
     try:
-        subprocess.run(["sudo", "mount", img.resolve(), mountpoint.resolve()], check=True)
+        subprocess.run(
+            ["sudo", "mount", "-o", "loop", img.resolve(), mountpoint.resolve()], check=True
+        )
         yield
     finally:
         subprocess.run(["sync"])
