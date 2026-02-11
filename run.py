@@ -35,7 +35,6 @@ from datetime import datetime
 import subprocess
 import shutil
 import time
-# import stty  # Comes from 3rd party
 
 import fireslurm.args as args
 import fireslurm.utils as utils
@@ -400,56 +399,53 @@ def main() -> None:
         args.print_start,
     )
 
-    # tty = stty.Stty(fd=0)
-    logger.warning("Changing SIGINT key to C-]!")
-    os.system("stty intr ^]")
-    # XXX: You must change the SIGINT keychord with os.system BEFORE
-    # you extend $LD_LIBRARY_PATH! If you don't, you will end up with
-    # glibc errors from libc and the dynamic loader!
-    # stty: .../libc.so.6: version `GLIBC_2.38' not found (required by stty)
-    (old_ld_library_path, _) = utils.extend_path(
-        "LD_LIBRARY_PATH",
-        [
-            args.sim_config.resolve(),
-        ],
-    )
-    # tty.intr = "^]"
-    # All of this hoopla is to make uartlog go to both stdout and a file.
-    uartlog = log_dir_latest / "uartlog"
-    with (
-        open(uartlog, "w") as uartlog,
-        subprocess.Popen(
-            fsim_cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,  # Merge stderr into stdout
-            text=True,
-            bufsize=1,
-        ) as proc,
-    ):
-        for line in proc.stdout:
-            n_line = line.replace("\r\n", "\n")
-            sys.stdout.write(n_line)
-            uartlog.write(n_line)
-        # Raise this error, which matches what subprocess.run(check=True) would
-        # do.
-        try:
-            # timeout is in seconds
-            proc.wait(timeout=5)
-            if proc.returncode != 0:
-                raise subprocess.CalledProcessError
-        except subprocess.TimeoutExpired:
-            # Ignoring the timeout is OK here, according to the docs.
-            # https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait
-            # We just use it so we can look at the returncode and throw some
-            # kind of error without blocking the writing/logging too much.
-            pass
+    with utils.change_sigint_key(sys.stdout.isatty()):
+        # XXX: You must change the SIGINT keychord with os.system BEFORE
+        # you extend $LD_LIBRARY_PATH! If you don't, you will end up with
+        # glibc errors from libc and the dynamic loader!
+        # stty: .../libc.so.6: version `GLIBC_2.38' not found (required by stty)
+        (old_ld_library_path, _) = utils.extend_path(
+            "LD_LIBRARY_PATH",
+            [
+                args.sim_config.resolve(),
+            ],
+        )
+        # tty.intr = "^]"
+        # All of this hoopla is to make uartlog go to both stdout and a file.
+        uartlog = log_dir_latest / "uartlog"
+        logger.info(f"Setting simulator's uartlog to {uartlog.resolve()}")
+        with (
+            open(uartlog, "w") as uartlog,
+            subprocess.Popen(
+                fsim_cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,  # Merge stderr into stdout
+                text=True,
+                bufsize=1,
+            ) as proc,
+        ):
+            for line in proc.stdout:
+                n_line = line.replace("\r\n", "\n")
+                sys.stdout.write(n_line)
+                uartlog.write(n_line)
+                logger.debug(n_line)
+            # Raise this error, which matches what subprocess.run(check=True) would
+            # do.
+            try:
+                # timeout is in seconds
+                proc.wait(timeout=5)
+                if proc.returncode != 0:
+                    raise subprocess.CalledProcessError
+            except subprocess.TimeoutExpired:
+                # Ignoring the timeout is OK here, according to the docs.
+                # https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait
+                # We just use it so we can look at the returncode and throw some
+                # kind of error without blocking the writing/logging too much.
+                pass
 
-    # Restore LD_LIBRARY_PATH to its previous value
-    # XXX: Similarly, we must restore $LD_LIBRARY_PATH BEFORE we call stty!
-    os.environ["LD_LIBRARY_PATH"] = old_ld_library_path
-    # tty.intr = "^c"
-    os.system("stty intr ^c")
-    logger.warning("SIGINT key changed back to to C-c!")
+        # Restore LD_LIBRARY_PATH to its previous value
+        # XXX: Similarly, we must restore $LD_LIBRARY_PATH BEFORE we call stty!
+        os.environ["LD_LIBRARY_PATH"] = old_ld_library_path
 
 
 if __name__ == "__main__":

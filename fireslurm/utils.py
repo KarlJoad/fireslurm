@@ -7,6 +7,7 @@ import sys
 import subprocess
 from contextlib import contextmanager
 import signal
+# import stty  # Comes from 3rd party
 
 
 logger = logging.getLogger(__name__)
@@ -111,3 +112,18 @@ def block_sigint():
     yield
     logger.info("End ignoring SIGINT! C-c will now work!")
     signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+
+@contextmanager
+def change_sigint_key(is_tty: bool):
+    if is_tty:
+        # tty = stty.Stty(fd=0)
+        logger.warning("Changing SIGINT key to C-]!")
+        os.system("stty intr ^]")
+        yield
+        # tty.intr = "^c"
+        os.system("stty intr ^c")
+        logger.warning("SIGINT key changed back to to C-c!")
+    else:
+        logger.warning("Not currently connected to TTY! Cannot change SIGINT key")
+        yield
