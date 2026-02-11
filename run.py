@@ -488,6 +488,10 @@ def main() -> None:
             n_line = line.replace("\r\n", "\n")
             sys.stdout.write(n_line)
             uartlog.write(n_line)
+        # Raise this error, which matches what subprocess.run(check=True) would
+        # do.
+        if proc.returncode != 0:
+            raise subprocess.CalledProcessError
 
     # Restore LD_LIBRARY_PATH to its previous value
     # XXX: Similarly, we must restore $LD_LIBRARY_PATH BEFORE we call stty!
