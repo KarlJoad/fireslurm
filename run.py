@@ -33,6 +33,7 @@ import stat
 import inspect
 import textwrap
 from datetime import datetime
+import shutil
 # import stty  # Comes from 3rd party
 
 import fireslurm.utils as utils
@@ -349,7 +350,11 @@ def overlay_disk_image(overlay_path: Path, sim_img: Path) -> None:
     assert (overlay_path / "firesim.sh").exists(), (
         "Firesim.sh script must be made before overlaying disk image"
     )
-    pass
+    # XXX: mountpoint is relative to CWD of the script!
+    mountpoint = Path("mountpoint")
+    mountpoint.mkdir(exist_ok=True)
+    with utils.mount_img(sim_img.resolve(), mountpoint.resolve()):
+        shutil.copytree(overlay_path.resolve(), mountpoint.resolve(), dirs_exist_ok=True)
 
 
 def build_firesim_cmd(
