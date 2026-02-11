@@ -79,4 +79,4 @@ def run_cmd(cmd) -> Union[subprocess.CompletedProcess, None]:
         logger.warning(f"Dry-Running {cmd=!s}")
         return None
     else:
-        return subprocess.run(cmd)
+        return subprocess.run(cmd, check=True)
