@@ -15,6 +15,8 @@ from pathlib import Path
 from dataclasses import dataclass
 import subprocess
 import re
+import textwrap
+import shutil
 
 import fireslurm.args as args
 import fireslurm.utils as utils
@@ -42,6 +44,9 @@ def build_argparser() -> argparse.ArgumentParser:
     )
     args.sim_config(parser)
     args.run_name(parser)
+    args.overlay_path(parser)
+    args.sim_img(parser)
+    args.sim_prog(parser)
     args.log_dir(parser)
     parser.add_argument(
         "--results-dir",
@@ -56,28 +61,78 @@ def build_argparser() -> argparse.ArgumentParser:
     return parser
 
 
-def build_job_script_contents() -> str:
+def build_job_script_contents(
+    config_dir: Path,
+    overlay_path: Path,
+    sim_img: Path,
+    sim_prog: Path,
+    log_dir: Path,
+    run_name: str,
+    run_py: Path,
+    verbosity: int,
+    cmd,
+) -> str:
     """
     Assemble and return a string that will be used as the contents of the script
     that will be given to sbatch.
     """
     logger.debug("Building the sbatch submission script's contents!")
-    return '#!/usr/bin/env bash\necho "Hello from $SLURM_JOB_ID"\nsleep 2'
-    # return "#!/usr/bin/env python3"
+
+    verbose_flag = "-" + "v" * verbosity if verbosity > 0 else ""
+
+    return textwrap.dedent(f"""\
+    #!/usr/bin/env bash
+    echo "Hello from $SLURM_JOB_ID"
+    sleep 2
+    # python3 {run_py.resolve()!s}
+    python3 /tank/karl/buoyancy/firesim-slurm/run.py \
+            {verbose_flag!s} \
+            --run-name {run_name!s} \
+            --sim-config {config_dir.resolve()!s} \
+            --overlay-path {overlay_path.resolve()!s} \
+            --sim-img {sim_img.resolve()!s} \
+            --sim-prog {sim_prog.resolve()!s} \
+            --log-dir {log_dir.resolve()!s} \
+            -- '{cmd!s}'
+    """)
 
 
-def build_sbatch_script(run_dir: Path, run_name: str) -> Path:
+def build_sbatch_script(
+    config_dir: Path,
+    overlay_path: Path,
+    sim_img: Path,
+    sim_prog: Path,
+    log_dir: Path,
+    results_dir: Path,
+    run_name: str,
+    verbosity: int,
+    cmd,
+) -> Path:
     """
     Return the path to the generated script that will be given to sbatch.
     """
-    assert run_dir.exists() and run_dir.is_dir(), (
-        f"{run_dir=!s} must exist as a directory before use!"
-    )
+    results_dir.mkdir(parents=True, exist_ok=True)
 
-    script = (run_dir / f"run-{run_name}.py").resolve()
-    logger.info(f"Placing the sbatch submission in {script=!s}")
+    script = (config_dir / f"run-{run_name}.sh").resolve()
+    # TODO: We need to robustify the finding of run.py!
+    OG_RUN_PY = Path("/tank/karl/buoyancy/firesim-slurm/run.py")
+    shutil.copy(OG_RUN_PY, config_dir)
+    job_run_py = config_dir / "run.py"
+    logger.info(f"Writing the sbatch submission to {script=!s}")
     with open(script, "w") as s:
-        s.write(build_job_script_contents())
+        s.write(
+            build_job_script_contents(
+                config_dir,
+                overlay_path,
+                sim_img,
+                sim_prog,
+                log_dir,
+                run_name,
+                job_run_py,
+                verbosity,
+                cmd,
+            )
+        )
     return script
 
 
@@ -93,6 +148,7 @@ def submit_slurm_job(
     Specify OUTPUT_FILE to name and send the job's stdout printing to another
     file.
     """
+
     job = JobInfo(-1)
     # fmt: off
     sbatch_cmd = [
@@ -124,12 +180,22 @@ def submit_slurm_job(
         text=True,
         check=True,
     )
+
+    if proc.returncode != 0:
+        logger.error(f"sbatch STDOUT: {proc.stdout}")
+        logger.error(f"sbatch STDERR: {proc.stderr}")
+        raise subprocess.CalledProcessError(proc.returncode, sbatch_cmd)
+    else:
+        logger.info(f"sbatch STDOUT: {proc.stdout}")
+        logger.info(f"sbatch STDERR: {proc.stderr}")
+
     # Regex match on the STDOUT that sbatch produced to grab the job number.
-    if not utils.dry_run and proc.returncode == 0:
+    if not utils.dry_run:
         job_match = re.match(r"^Submitted batch job (\d+)$", proc.stdout)
         job.id = job_match[1]
-    logger.info(f"Job submitted! Job Info {job=!s}")
-    logger.info(f"STDOUT output will be in {output_file=!s}")
+        logger.info(f"Job submitted! Job Info {job=!s}")
+        logger.info(f"STDOUT output will be in {output_file=!s}")
+
     return job
 
 
@@ -147,7 +213,18 @@ def main() -> None:
 
     args.log_dir.mkdir(parents=True, exist_ok=True)
 
-    job_file = build_sbatch_script(args.results_dir, JOB_NAME)
+    job_file = build_sbatch_script(
+        args.sim_config,
+        args.overlay_path,
+        args.sim_img,
+        args.sim_prog,
+        args.log_dir,
+        args.results_dir,
+        JOB_NAME,
+        args.verbose,
+        'echo "Hello from fireslurm!"; ls -lah',
+    )
+
     # XXX: Slurm will not create directories to the STDOUT/STDERR paths that we
     # specify with the --output/--error flags to sbatch. So we must do it
     # ourself.
