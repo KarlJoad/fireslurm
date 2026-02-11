@@ -265,13 +265,21 @@ def flash_fpga(sim_config: Path) -> None:
     """
     Flash the FPGA with the Firesim bitstream in SIM_CONFIG.
     """
+    bitstream = sim_config / "xilinx_vcu118" / "firesim.bit"
+    if not bitstream.exists():
+        raise FileNotFoundError(f"{bitstream.resolve()} does not exist!")
+
+    # XXX: The flash FPGA command is dangerous! It will silently fail if you
+    # do not give it a bitstream to flash. If you give it something wrong, a
+    # directory for instance, xvsecctl (and this script) will still have an
+    # exit code of 0 and say it configured the FPGA successfully!
     FLASH_CMD = [
         "sudo",
         "/usr/local/bin/firesim-xvsecctl-flash-fpga",
         "0x01",
         "0x00",
         "0x1",
-        f"{sim_config}/xilinx_vcu118/firesim.bit",
+        bitstream.resolve(),
     ]
     PCIE_PERMS_CMD = [
         "sudo",
