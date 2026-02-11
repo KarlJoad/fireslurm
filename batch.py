@@ -42,13 +42,14 @@ def build_argparser() -> argparse.ArgumentParser:
     )
     args.sim_config(parser)
     args.run_name(parser)
+    args.log_dir(parser)
     parser.add_argument(
         "--results-dir",
         dest="results_dir",
         required=True,
         type=Path,
-        help=inspect.cleandoc("""Path to where Slurm and run results should be
-        put."""),
+        help=inspect.cleandoc("""Path to where results extracted from FireSim's
+        outputs should be placed."""),
     )
     args.verbose(parser)
     args.dry_run(parser)
@@ -149,7 +150,7 @@ def main() -> None:
     _job = submit_slurm_job(
         JOB_NAME,
         job_file,
-        args.results_dir / "slurm-log/%j.out",
+        args.log_dir / "slurm-log/%j.out",
         args.verbose,
     )
 
