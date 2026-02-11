@@ -6,6 +6,7 @@ import curses
 import sys
 import subprocess
 from contextlib import contextmanager
+import signal
 
 
 logger = logging.getLogger(__name__)
@@ -101,3 +102,12 @@ def mount_img(img: Path, mountpoint: Path):
     finally:
         subprocess.run(["sync"])
         subprocess.run(["sudo", "umount", mountpoint.resolve()])
+
+
+@contextmanager
+def block_sigint():
+    logger.info("Begin ignoring SIGINT! C-c will not work!")
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    yield
+    logger.info("End ignoring SIGINT! C-c will now work!")
+    signal.signal(signal.SIGINT, signal.SIG_DFL)

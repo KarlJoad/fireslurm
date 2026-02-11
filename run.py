@@ -25,7 +25,6 @@ if sys.version_info[0] < 3:
 
 import argparse
 import logging
-import signal
 import os
 from pathlib import Path
 from typing import List, Union
@@ -380,22 +379,17 @@ def main() -> None:
     # We must block SIGINT during this process because this is a "delicate"
     # operation. Getting interrupted can leave the FPGA in such a borked state
     # that we have to reflash Firesim's controllers to the FPGA.
-    logger.info("Begin ignoring SIGINT! C-c will not work!")
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    with utils.block_sigint():
+        flash_fpga(args.sim_config)
+        overlay_disk_image(args.overlay_path, args.sim_img)
 
-    flash_fpga(args.sim_config)
-    overlay_disk_image(args.overlay_path, args.sim_img)
-
-    # XXX: We need a little bit of grace time between flashing the FPGA,
-    # overlaying the disk image; and actually launching the simulation.
-    # The exact reasons for this sleep's necessity are unknown right now, but
-    # removing it causes simulations that do not start.
-    sleep_time = 1
-    logger.info(f"Sleeping for {sleep_time} seconds to let things stabilize")
-    time.sleep(sleep_time)
-
-    logger.info("End ignoring SIGINT! C-c will now work!")
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
+        # XXX: We need a little bit of grace time between flashing the FPGA,
+        # overlaying the disk image; and actually launching the simulation.
+        # The exact reasons for this sleep's necessity are unknown right now, but
+        # removing it causes simulations that do not start.
+        sleep_time = 1
+        logger.info(f"Sleeping for {sleep_time} seconds to let things stabilize")
+        time.sleep(sleep_time)
     logger.info("Finished infrasetup")
 
     fsim_cmd = build_firesim_cmd(
