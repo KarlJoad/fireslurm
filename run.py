@@ -33,6 +33,7 @@ import stat
 import inspect
 import textwrap
 from datetime import datetime
+import subprocess
 import shutil
 import time
 # import stty  # Comes from 3rd party
@@ -425,7 +426,7 @@ def main() -> None:
     # to run when it finishes booting.
     write_firesim_sh(args.overlay_path, args.cmd)
 
-    _log_dir_latest = update_log_files(args.log_dir, args.run_log_name)
+    log_dir_latest = update_log_files(args.log_dir, args.run_log_name)
 
     logger.info("Begin infrasetup")
     # We must block SIGINT during this process because this is a "delicate"
@@ -471,7 +472,22 @@ def main() -> None:
         ],
     )
     # tty.intr = "^]"
-    utils.run_cmd(fsim_cmd)
+    # All of this hoopla is to make uartlog go to both stdout and a file.
+    uartlog = log_dir_latest / "uartlog"
+    with (
+        open(uartlog, "w") as uartlog,
+        subprocess.Popen(
+            fsim_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,  # Merge stderr into stdout
+            text=True,
+            bufsize=1,
+        ) as proc,
+    ):
+        for line in proc.stdout:
+            n_line = line.replace("\r\n", "\n")
+            sys.stdout.write(n_line)
+            uartlog.write(n_line)
 
     # Restore LD_LIBRARY_PATH to its previous value
     # XXX: Similarly, we must restore $LD_LIBRARY_PATH BEFORE we call stty!
