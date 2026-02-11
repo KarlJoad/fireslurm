@@ -34,6 +34,7 @@ import inspect
 import textwrap
 from datetime import datetime
 import shutil
+import time
 # import stty  # Comes from 3rd party
 
 import fireslurm.utils as utils
@@ -435,6 +436,14 @@ def main() -> None:
 
     flash_fpga(args.sim_config)
     overlay_disk_image(args.overlay_path, args.sim_img)
+
+    # XXX: We need a little bit of grace time between flashing the FPGA,
+    # overlaying the disk image; and actually launching the simulation.
+    # The exact reasons for this sleep's necessity are unknown right now, but
+    # removing it causes simulations that do not start.
+    sleep_time = 1
+    logger.info(f"Sleeping for {sleep_time} seconds to let things stabilize")
+    time.sleep(sleep_time)
 
     logger.info("End ignoring SIGINT! C-c will now work!")
     signal.signal(signal.SIGINT, signal.SIG_DFL)
