@@ -145,7 +145,14 @@ def main() -> None:
 
     JOB_NAME = f"super-duper-quick-test-{args.run_name}"
 
+    args.log_dir.mkdir(parents=True, exist_ok=True)
+
     job_file = build_sbatch_script(args.results_dir, JOB_NAME)
+    # XXX: Slurm will not create directories to the STDOUT/STDERR paths that we
+    # specify with the --output/--error flags to sbatch. So we must do it
+    # ourself.
+    slurm_log_dir = args.log_dir / "slurm-log"
+    slurm_log_dir.mkdir(parents=True, exist_ok=True)
 
     _job = submit_slurm_job(
         JOB_NAME,
