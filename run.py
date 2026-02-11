@@ -84,7 +84,8 @@ def build_argparse() -> argparse.ArgumentParser:
         required=True,
         type=Path,
         help=inspect.cleandoc("""Path to the program to run at the top-level
-        by Firesim."""),
+        by Firesim.
+        This should be the combined OpenSBI firmware and Linux kernel program."""),
     )
     parser.add_argument(
         "--log-dir",
