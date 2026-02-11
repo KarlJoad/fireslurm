@@ -16,6 +16,7 @@ from dataclasses import dataclass
 import subprocess
 import re
 
+import fireslurm.args as args
 import fireslurm.utils as utils
 
 
@@ -39,23 +40,8 @@ def build_argparser() -> argparse.ArgumentParser:
         epilog="Lovingly made by NCW, Atmn, and KGH.",
         add_help=True,
     )
-    parser.add_argument(
-        "--fpga-config",
-        dest="fpga_config",
-        required=True,
-        type=str,
-        help=inspect.cleandoc("""The FPGA configuration that should be used
-        by this job. This is given to run.py for running, so it should match
-        that configuration."""),
-    )
-    parser.add_argument(
-        "--run-name",
-        dest="run_name",
-        required=True,
-        type=str,
-        help=inspect.cleandoc("""Name to give to this run.
-        NOTE: This value is also used in the logging directory!"""),
-    )
+    args.sim_config(parser)
+    args.run_name(parser)
     parser.add_argument(
         "--results-dir",
         dest="results_dir",
@@ -64,27 +50,8 @@ def build_argparser() -> argparse.ArgumentParser:
         help=inspect.cleandoc("""Path to where Slurm and run results should be
         put."""),
     )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        dest="verbose",
-        action="count",
-        default=0,
-        help=inspect.cleandoc("""How verbosely to log. This flag can be included
-        multiple times to increase the verbosity.
-        This will also be passed to Slurm commands to increase the amount they
-        log too."""),
-    )
-    parser.add_argument(
-        "-n",
-        "--dry-run",
-        dest="dry_run",
-        action="store_true",
-        default=False,
-        help=inspect.cleandoc("""
-        Should all subcommands this program invokes be "dry-run"?
-        If set, the sub-commands will do nothing, but will be logged."""),
-    )
+    args.verbose(parser)
+    args.dry_run(parser)
     return parser
 
 

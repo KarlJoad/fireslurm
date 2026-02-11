@@ -38,6 +38,7 @@ import shutil
 import time
 # import stty  # Comes from 3rd party
 
+import fireslurm.args as args
 import fireslurm.utils as utils
 import fireslurm.validation as validate
 
@@ -56,55 +57,12 @@ def build_argparse() -> argparse.ArgumentParser:
         # NOTE: color= added by 3.14
         # color=utils.supports_color() and utils.wants_color(),
     )
-    # TODO: This litany of positional flags should be replaced by long-arg flags.
-    parser.add_argument(
-        "--sim-config",
-        dest="sim_config",
-        required=True,
-        type=Path,
-        help=inspect.cleandoc("""Path to the simulation's configuration
-        directory. This should include both the FireSim host-side program, the
-        FPGA bitstream, and all relevant libraries needed."""),
-    )
-    parser.add_argument(
-        "--overlay-path",
-        dest="overlay_path",
-        required=True,
-        type=Path,
-        help=inspect.cleandoc("""Path to directory to overlay on top of
-        simulation disk image."""),
-    )
-    parser.add_argument(
-        "--sim-img",
-        dest="sim_img",
-        required=True,
-        type=Path,
-        help=inspect.cleandoc("""Path to the simulation disk image."""),
-    )
-    parser.add_argument(
-        "--sim-prog",
-        dest="sim_prog",
-        required=True,
-        type=Path,
-        help=inspect.cleandoc("""Path to the program to run at the top-level
-        by Firesim.
-        This should be the combined OpenSBI firmware and Linux kernel program."""),
-    )
-    parser.add_argument(
-        "--log-dir",
-        dest="log_dir",
-        required=True,
-        type=Path,
-        help=inspect.cleandoc("""Desired path for all log files to appear in."""),
-    )
-    parser.add_argument(
-        "--run-log-name",
-        dest="run_log_name",
-        required=True,
-        type=str,
-        help=inspect.cleandoc("""Name that this run should be logged as.
-        This log file will be created beneath the provided log_dir."""),
-    )
+    args.sim_config(parser)
+    args.overlay_path(parser)
+    args.sim_img(parser)
+    args.sim_prog(parser)
+    args.log_dir(parser)
+    args.run_name(parser)
     parser.add_argument(
         "-p",
         "--print-start",
@@ -120,26 +78,8 @@ def build_argparse() -> argparse.ArgumentParser:
         help=inspect.cleandoc("""Commands & Flags (in shell syntax) to run
         inside Firesim."""),
     )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        dest="verbose",
-        action="count",
-        default=0,
-        help=inspect.cleandoc("""
-                    How verbosely to log. This flag can be included multiple
-                    times to increase the verbosity"""),
-    )
-    parser.add_argument(
-        "-n",
-        "--dry-run",
-        dest="dry_run",
-        action="store_true",
-        default=False,
-        help=inspect.cleandoc("""
-        Should all subcommands this program invokes be "dry-run"?
-        If set, the sub-commands will do nothing, but will be logged."""),
-    )
+    args.verbose(parser)
+    args.dry_run(parser)
 
     return parser
 
@@ -221,25 +161,25 @@ def validate_log_dir(log_dir: Path) -> bool:
     )
 
 
-def validate_run_log_name(run_log_name: str) -> bool:
+def validate_run_name(run_name: str) -> bool:
     """
-    Return True if RUN_LOG_NAME is a valid name for a run.
+    Return True if RUN_NAME is a valid name for a run.
     Return False otherwise.
 
     In particular, this function ensures that runs hav enames that are valid for
     POSIX file systems. Some special characters are disallowed, spaces are
     discouraged, etc.
     """
-    logger.debug(f"Validating that {run_log_name=!r} is a valid POSIX file name")
+    logger.debug(f"Validating that {run_name=!r} is a valid POSIX file name")
     # Empty names and the bare path separator "/" are invalid run names.
-    if not run_log_name or os.pathsep in run_log_name:
+    if not run_name or os.pathsep in run_name:
         return False
     # NOTE: The use of regexps here to perform a "POSIX match" on the log name
     # is not technically correct, nor robust. But it is good enough for our
     # limited Fireslurm usage.
     import re
 
-    if re.fullmatch(r"[a-zA-Z0-9.\-_]+", run_log_name):
+    if re.fullmatch(r"[a-zA-Z0-9.\-_]+", run_name):
         return True
     else:
         return False
@@ -258,7 +198,7 @@ def validate_args(args: argparse.Namespace) -> bool:
             validate_sim_img(args.sim_img),
             validate_sim_prog(args.sim_prog),
             validate_log_dir(args.log_dir),
-            validate_run_log_name(args.run_log_name),
+            validate_run_name(args.run_name),
         ]
     )
 
@@ -426,7 +366,7 @@ def main() -> None:
     # to run when it finishes booting.
     write_firesim_sh(args.overlay_path, args.cmd)
 
-    log_dir_latest = update_log_files(args.log_dir, args.run_log_name)
+    log_dir_latest = update_log_files(args.log_dir, args.run_name)
 
     logger.info("Begin infrasetup")
     # We must block SIGINT during this process because this is a "delicate"

@@ -19,6 +19,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 
+import fireslurm.args as args
 import fireslurm.utils as utils
 
 
@@ -62,16 +63,7 @@ def build_argparse() -> argparse.ArgumentParser:
         This directory should contain the driver-bundle.tar.gz and
         firesim.tar.gz."""),
     )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        dest="verbose",
-        action="count",
-        default=0,
-        help=inspect.cleandoc("""
-                    How verbosely to log. This flag can be included multiple
-                    times to increase the verbosity"""),
-    )
+    args.verbose(parser)
     return parser
 
 
