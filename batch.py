@@ -158,6 +158,7 @@ def submit_slurm_job(
         "--nodelist", "pepperjack",
         "--job-name", f"{job_name!s}",
         "--output", f"{output_file.resolve()!s}",
+        "--error", f"{output_file.with_suffix('.err').resolve()!s}",
         "--exclusive",
     ]
     # fmt: on
