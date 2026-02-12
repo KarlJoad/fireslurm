@@ -35,6 +35,7 @@ from datetime import datetime
 import subprocess
 import shutil
 import time
+import pty
 
 import fireslurm.args as args
 import fireslurm.utils as utils
@@ -408,6 +409,9 @@ def main() -> None:
     )
 
     with utils.change_sigint_key(sys.stdout.isatty()):
+        # Create a pseudo-terminal
+        (master, slave) = pty.openpty()
+
         # XXX: You must change the SIGINT keychord with os.system BEFORE
         # you extend $LD_LIBRARY_PATH! If you don't, you will end up with
         # glibc errors from libc and the dynamic loader!
@@ -426,30 +430,36 @@ def main() -> None:
             open(uartlog, "w") as uartlog,
             subprocess.Popen(
                 fsim_cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,  # Merge stderr into stdout
-                text=True,
-                bufsize=1,
+                stdout=slave,
+                stderr=slave,
+                stdin=slave,
+                start_new_session=True,
+                # text=True,
+                bufsize=0,
             ) as proc,
         ):
-            for line in proc.stdout:
-                n_line = line.replace("\r\n", "\n")
-                sys.stdout.write(n_line)
-                uartlog.write(n_line)
-                logger.debug(n_line)
-            # Raise this error, which matches what subprocess.run(check=True) would
-            # do.
-            try:
-                # timeout is in seconds
-                proc.wait(timeout=5)
-                if proc.returncode != 0:
-                    raise subprocess.CalledProcessError
-            except subprocess.TimeoutExpired:
-                # Ignoring the timeout is OK here, according to the docs.
-                # https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait
-                # We just use it so we can look at the returncode and throw some
-                # kind of error without blocking the writing/logging too much.
-                pass
+            # Close slave in parent process
+            os.close(slave)
+
+            # Read from master
+            while True:
+                try:
+                    output = os.read(master, 1024)
+                    if not output:
+                        break
+                    line = output.decode()
+                    n_line = line.replace("\r\n", "\n")
+                    sys.stdout.write(n_line)
+                    uartlog.write(n_line)
+                    logger.debug(n_line)
+                except OSError:
+                    break
+
+            os.close(master)
+
+            proc.wait()
+            if proc.returncode != 0:
+                raise subprocess.CalledProcessError(proc.returncode, fsim_cmd)
 
         # Restore LD_LIBRARY_PATH to its previous value
         # XXX: Similarly, we must restore $LD_LIBRARY_PATH BEFORE we call stty!
