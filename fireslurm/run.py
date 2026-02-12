@@ -37,9 +37,9 @@ import shutil
 import time
 import pty
 
-import fireslurm.args as args
-import fireslurm.utils as utils
-import fireslurm.validation as validate
+import args as args
+import utils as utils
+import validation as validate
 
 
 logger = logging.getLogger(__name__)

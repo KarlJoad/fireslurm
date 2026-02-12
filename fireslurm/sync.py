@@ -19,8 +19,8 @@ import os
 from pathlib import Path
 from datetime import datetime
 
-import fireslurm.args as args
-import fireslurm.utils as utils
+import args as args
+import utils as utils
 
 
 logger = logging.getLogger(__name__)
