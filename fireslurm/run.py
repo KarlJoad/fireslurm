@@ -314,6 +314,32 @@ def overlay_disk_image(overlay_path: Path, sim_img: Path) -> None:
         shutil.copytree(overlay_path.resolve(), mountpoint.resolve(), dirs_exist_ok=True)
 
 
+def infrasetup(sim_config: Path, overlay_path: Path, sim_img: Path) -> None:
+    """
+    Perform the same steps as "firesim infrasetup".
+
+    This flashes the FPGA with the design's bitstream stored in SIM_CONFIG and
+    overlays all of the files that the user provided in OVERLAY_PATH to the
+    SIM_IMG.
+    """
+    logger.info("Begin infrasetup")
+    # We must block SIGINT during this process because this is a "delicate"
+    # operation. Getting interrupted can leave the FPGA in such a borked state
+    # that we have to reflash Firesim's controllers to the FPGA.
+    with utils.block_sigint():
+        flash_fpga(sim_config)
+        overlay_disk_image(overlay_path, sim_img)
+
+        # XXX: We need a little bit of grace time between flashing the FPGA,
+        # overlaying the disk image; and actually launching the simulation.
+        # The exact reasons for this sleep's necessity are unknown right now, but
+        # removing it causes simulations that do not start.
+        sleep_time = 1
+        logger.info(f"Sleeping for {sleep_time} seconds to let things stabilize")
+        time.sleep(sleep_time)
+    logger.info("Finished infrasetup")
+
+
 def build_firesim_cmd(
     sim_config: Path, sim_img: Path, sim_prog: Path, log_dir: Path, print_start: int
 ) -> List[str]:
@@ -383,22 +409,7 @@ def main() -> None:
 
     log_dir_latest = update_log_files(args.log_dir, args.run_name)
 
-    logger.info("Begin infrasetup")
-    # We must block SIGINT during this process because this is a "delicate"
-    # operation. Getting interrupted can leave the FPGA in such a borked state
-    # that we have to reflash Firesim's controllers to the FPGA.
-    with utils.block_sigint():
-        flash_fpga(args.sim_config)
-        overlay_disk_image(args.overlay_path, args.sim_img)
-
-        # XXX: We need a little bit of grace time between flashing the FPGA,
-        # overlaying the disk image; and actually launching the simulation.
-        # The exact reasons for this sleep's necessity are unknown right now, but
-        # removing it causes simulations that do not start.
-        sleep_time = 1
-        logger.info(f"Sleeping for {sleep_time} seconds to let things stabilize")
-        time.sleep(sleep_time)
-    logger.info("Finished infrasetup")
+    infrasetup(args.sim_config, args.overlay_path, args.sim_img)
 
     fsim_cmd = build_firesim_cmd(
         args.sim_config,
