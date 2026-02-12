@@ -403,7 +403,7 @@ def main() -> None:
         args.sim_config,
         args.sim_img,
         args.sim_prog,
-        args.log_dir,
+        log_dir_latest,
         args.print_start,
     )
 
