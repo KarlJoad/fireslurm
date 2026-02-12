@@ -86,14 +86,14 @@ def build_job_script_contents(
     echo "Hello from $SLURM_JOB_ID"
     sleep 2
     echo "Running {run_py.resolve()!s}"
-    python3 {run_py.resolve()!s} \
-            {verbose_flag!s} \
-            --run-name {run_name!s} \
-            --sim-config {config_dir.resolve()!s} \
-            --overlay-path {overlay_path.resolve()!s} \
-            --sim-img {sim_img.resolve()!s} \
-            --sim-prog {sim_prog.resolve()!s} \
-            --log-dir {log_dir.resolve()!s} \
+    python3 {run_py.resolve()!s} \\
+            {verbose_flag!s} \\
+            --run-name {run_name!s} \\
+            --sim-config {config_dir.resolve()!s} \\
+            --overlay-path {overlay_path.resolve()!s} \\
+            --sim-img {sim_img.resolve()!s} \\
+            --sim-prog {sim_prog.resolve()!s} \\
+            --log-dir {log_dir.resolve()!s} \\
             -- '{cmd!s}'
     """)
 
