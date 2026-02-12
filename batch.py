@@ -80,12 +80,13 @@ def build_job_script_contents(
 
     verbose_flag = "-" + "v" * verbosity if verbosity > 0 else ""
 
+    run_py = Path("/tank/karl/buoyancy/firesim-slurm/run.py")
     return textwrap.dedent(f"""\
     #!/usr/bin/env bash
     echo "Hello from $SLURM_JOB_ID"
     sleep 2
-    # python3 {run_py.resolve()!s}
-    python3 /tank/karl/buoyancy/firesim-slurm/run.py \
+    echo "Running {run_py.resolve()!s}"
+    python3 {run_py.resolve()!s} \
             {verbose_flag!s} \
             --run-name {run_name!s} \
             --sim-config {config_dir.resolve()!s} \
