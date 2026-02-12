@@ -386,37 +386,19 @@ def build_firesim_cmd(
     return cmd
 
 
-def main() -> None:
-    parser = build_argparse()
-    args = parser.parse_args()
-    utils.dry_run = args.dry_run
-    logging.basicConfig(
-        format="%(levelname)s:%(name)s:%(funcName)s:%(lineno)d:%(message)s",
-        level=logging.DEBUG if args.verbose > 0 else logging.INFO,
-    )
-    logger.debug(f"Running with {args=!s}")
-    logger.debug(f"Command to run INSIDE Firesim: {args.cmd=!s}")
-
-    if validate_args(args):
-        logger.debug(f"{args=!s} are valid!")
-    else:
-        logger.error(f"{args=!s} are INVALID! ABORTING!")
-
-    # XXX: Writing firesim.sh MUST come before doing the disk image overlay!
-    # If you don't do it, then the simulation will NOT have a /firesim.sh script
-    # to run when it finishes booting.
-    write_firesim_sh(args.overlay_path, args.cmd)
-
-    log_dir_latest = update_log_files(args.log_dir, args.run_name)
-
-    infrasetup(args.sim_config, args.overlay_path, args.sim_img)
-
+def run_simulation(
+    sim_config: Path,
+    sim_img: Path,
+    sim_prog: Path,
+    log_dir: Path,
+    print_start: int,
+) -> None:
     fsim_cmd = build_firesim_cmd(
-        args.sim_config,
-        args.sim_img,
-        args.sim_prog,
-        log_dir_latest,
-        args.print_start,
+        sim_config,
+        sim_img,
+        sim_prog,
+        log_dir,
+        print_start,
     )
 
     with utils.change_sigint_key(sys.stdout.isatty()):
@@ -430,12 +412,12 @@ def main() -> None:
         (old_ld_library_path, _) = utils.extend_path(
             "LD_LIBRARY_PATH",
             [
-                args.sim_config.resolve(),
+                sim_config.resolve(),
             ],
         )
         # tty.intr = "^]"
         # All of this hoopla is to make uartlog go to both stdout and a file.
-        uartlog = log_dir_latest / "uartlog"
+        uartlog = log_dir / "uartlog"
         logger.info(f"Setting simulator's uartlog to {uartlog.resolve()}")
         with (
             open(uartlog, "w") as uartlog,
@@ -475,6 +457,33 @@ def main() -> None:
         # Restore LD_LIBRARY_PATH to its previous value
         # XXX: Similarly, we must restore $LD_LIBRARY_PATH BEFORE we call stty!
         os.environ["LD_LIBRARY_PATH"] = old_ld_library_path
+
+
+def main() -> None:
+    parser = build_argparse()
+    args = parser.parse_args()
+    utils.dry_run = args.dry_run
+    logging.basicConfig(
+        format="%(levelname)s:%(name)s:%(funcName)s:%(lineno)d:%(message)s",
+        level=logging.DEBUG if args.verbose > 0 else logging.INFO,
+    )
+    logger.debug(f"Running with {args=!s}")
+    logger.debug(f"Command to run INSIDE Firesim: {args.cmd=!s}")
+
+    if validate_args(args):
+        logger.debug(f"{args=!s} are valid!")
+    else:
+        logger.error(f"{args=!s} are INVALID! ABORTING!")
+
+    # XXX: Writing firesim.sh MUST come before doing the disk image overlay!
+    # If you don't do it, then the simulation will NOT have a /firesim.sh script
+    # to run when it finishes booting.
+    write_firesim_sh(args.overlay_path, args.cmd)
+
+    log_dir_latest = update_log_files(args.log_dir, args.run_name)
+
+    infrasetup(args.sim_config, args.overlay_path, args.sim_img)
+    run_simulation(args.sim_config, args.sim_img, args.sim_prog, log_dir_latest, args.print_start)
 
 
 if __name__ == "__main__":
