@@ -284,10 +284,18 @@ def flash_fpga(sim_config: Path) -> None:
         "firesim-change-pcie-perms",
         "0000:01:00:0",
     ]
+
     logger.debug(f"Flashing the FPGA. {FLASH_CMD=!s}")
-    utils.run_cmd(FLASH_CMD)
+    if not utils.dry_run:
+        proc = subprocess.run(FLASH_CMD, check=True, capture_output=True, text=True)
+        logger.info(f"FPGA flashing STDOUT: {proc.stdout}")
+        logger.debug(f"FPGA flashing STDERR: {proc.stdout}")
+
     logger.debug(f"Changing PCIe FPGA Permissions. {PCIE_PERMS_CMD=!s}")
-    utils.run_cmd(PCIE_PERMS_CMD)
+    if not utils.dry_run:
+        proc = subprocess.run(PCIE_PERMS_CMD, check=True, capture_output=True, text=True)
+        logger.info(f"FPGA permissions STDOUT: {proc.stdout}")
+        logger.debug(f"FPGA permissions STDERR: {proc.stdout}")
 
 
 def overlay_disk_image(overlay_path: Path, sim_img: Path) -> None:
