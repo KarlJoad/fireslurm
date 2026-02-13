@@ -405,9 +405,8 @@ def run_simulation(
                         break
                     line = output.decode()
                     n_line = line.replace("\r\n", "\n")
-                    sys.stdout.write(n_line)
+                    print(n_line, end="")
                     uartlog.write(n_line)
-                    logger.debug(n_line)
                 except OSError:
                     break
 
