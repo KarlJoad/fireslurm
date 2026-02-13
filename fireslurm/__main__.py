@@ -93,6 +93,33 @@ def build_batch_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentP
     args.overlay_path(batch_parser)
     args.sim_img(batch_parser)
     args.sim_prog(batch_parser)
+    batch_parser.add_argument(
+        "-p",
+        "--partition",
+        dest="slurm_partitions",
+        required=True,
+        default="firesim",
+        type=str,
+        help=inspect.cleandoc("""The Slurm partition that this job should run on.
+        Like Slurm, this can accept a comma-delimited list of partitions to run
+        on. The first partition that is available will run the job.
+
+        NOTE: This is passed through to Slurm DIRECTLY! FireSlurm does NOTHING
+        with this flag!"""),
+    )
+    batch_parser.add_argument(
+        "-w",
+        "--nodelist",
+        dest="slurm_nodelist",
+        required=True,
+        type=str,
+        help=inspect.cleandoc("""The Cheese Cluster node in Slurm (*jack) that
+        this simulation should be run on. Like Slurm, this is a comma-delimited
+        list/range of hosts that are allowed to/should run this job.
+
+        NOTE: This is passed through to Slurm DIRECTLY! FireSlurm does NOTHING
+        with this flag!"""),
+    )
     args.log_dir(batch_parser)
     batch_parser.add_argument(
         "--results-dir",

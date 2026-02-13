@@ -158,7 +158,9 @@ def submit_slurm_job(
     job_name: str,
     job_file: Path,
     output_file: Path,
-    verbosity_level: int = 0,
+    verbosity_level: int,
+    slurm_partitions: str,
+    slurm_nodelist: str,
 ) -> JobInfo:
     """
     Submit JOB_FILE to Slurm with JOB_NAME, returning the job's information.
@@ -171,8 +173,8 @@ def submit_slurm_job(
     # fmt: off
     sbatch_cmd = [
         "sbatch",
-        "--partition", "firesim",
-        "--nodelist", "pepperjack",
+        "--partition", slurm_partitions,
+        "--nodelist", slurm_nodelist,
         "--job-name", f"{job_name!s}",
         "--output", f"{output_file.resolve()!s}",
         "--error", f"{output_file.with_suffix('.err').resolve()!s}",
@@ -227,6 +229,8 @@ def batch(
     log_dir: Path,
     results_dir: Path,
     verbosity: int,
+    slurm_partitions: str,
+    slurm_nodelist: str,
     **kwargs,
 ) -> None:
     JOB_NAME = f"super-duper-quick-test-{run_name}"
@@ -256,4 +260,6 @@ def batch(
         job_file,
         log_dir / "slurm-log/%j.out",
         verbosity,
+        slurm_partitions,
+        slurm_nodelist,
     )
