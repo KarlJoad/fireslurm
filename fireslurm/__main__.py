@@ -89,19 +89,7 @@ def build_batch_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentP
     args.sim_img(batch_parser)
     args.sim_prog(batch_parser)
     args.partition(batch_parser)
-    batch_parser.add_argument(
-        "-w",
-        "--nodelist",
-        dest="slurm_nodelist",
-        required=True,
-        type=str,
-        help=inspect.cleandoc("""The Cheese Cluster node in Slurm (*jack) that
-        this simulation should be run on. Like Slurm, this is a comma-delimited
-        list/range of hosts that are allowed to/should run this job.
-
-        NOTE: This is passed through to Slurm DIRECTLY! FireSlurm does NOTHING
-        with this flag!"""),
-    )
+    args.nodelist(batch_parser)
     args.log_dir(batch_parser)
     batch_parser.add_argument(
         "--results-dir",

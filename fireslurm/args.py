@@ -157,3 +157,23 @@ def partition(parser: argparse.ArgumentParser) -> None:
         NOTE: This is passed through to Slurm DIRECTLY! FireSlurm does NOTHING
         with this flag!"""),
     )
+
+
+def nodelist(parser: argparse.ArgumentParser) -> None:
+    """
+    Add the -w/--nodelist flag to PARSER to specify which Slurm nodes in the
+    selected Slurm partition should run this program.
+    """
+    parser.add_argument(
+        "-w",
+        "--nodelist",
+        dest="slurm_nodelist",
+        required=True,
+        type=str,
+        help=inspect.cleandoc("""The Cheese Cluster node in Slurm (*jack) that
+        this simulation should be run on. Like Slurm, this is a comma-delimited
+        list/range of hosts that are allowed to/should run this job.
+
+        NOTE: This is passed through to Slurm DIRECTLY! FireSlurm does NOTHING
+        with this flag!"""),
+    )
