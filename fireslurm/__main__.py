@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 def build_sync_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     sync_parser = subparser.add_parser(
         "sync",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         help=inspect.cleandoc(
             """Synchronize your FireSlurm layout with a new FireSim environment"""
         ),
@@ -51,6 +52,7 @@ def build_sync_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentPa
 def build_run_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     run_parser = subparser.add_parser(
         "run",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         help=inspect.cleandoc("""Run a FireSim simulation"""),
     )
     run_parser.set_defaults(func=fireslurm.run.run)
@@ -82,6 +84,7 @@ def build_run_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentPar
 def build_batch_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     batch_parser = subparser.add_parser(
         "batch",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         help=inspect.cleandoc("""Submit a FireSim simulation job to Slurm using sbatch"""),
     )
     batch_parser.set_defaults(func=fireslurm.batch.batch)
@@ -108,6 +111,7 @@ def build_argparser() -> argparse.ArgumentParser:
         description="Run and Batch (with Slurm's sbatch) FireSim simulation runs!",
         epilog="Lovingly made by NCW, Atmn, and KGH.",
         add_help=True,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     args.verbose(parser)
     args.dry_run(parser)
