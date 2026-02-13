@@ -387,7 +387,6 @@ def run_simulation(
                 stdout=slave,
                 stderr=slave,
                 stdin=slave,
-                start_new_session=True,
                 # text=True,
                 bufsize=0,
             ) as proc,
