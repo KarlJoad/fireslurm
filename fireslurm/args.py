@@ -18,8 +18,9 @@ def sim_config(parser: argparse.ArgumentParser) -> None:
         required=True,
         type=Path,
         help=inspect.cleandoc("""Path to the simulation's configuration
-        directory. This should include both the FireSim host-side program, the
-        FPGA bitstream, and all relevant libraries needed."""),
+        directory. This will/should include both the FireSim host-side program,
+        the FPGA bitstream, and all relevant libraries needed.
+        This is the target directory for synchronizing."""),
     )
 
 
@@ -99,7 +100,7 @@ def verbose(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "-v",
         "--verbose",
-        dest="verbose",
+        dest="verbosity",
         action="count",
         default=0,
         help=inspect.cleandoc("""How verbosely to log. This flag can be included

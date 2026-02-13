@@ -29,7 +29,6 @@ import os
 from pathlib import Path
 from typing import List, Union
 import stat
-import inspect
 import textwrap
 from datetime import datetime
 import subprocess
@@ -37,50 +36,11 @@ import shutil
 import time
 import pty
 
-import args as args
-import utils as utils
-import validation as validate
+import fireslurm.utils as utils
+import fireslurm.validation as validate
 
 
 logger = logging.getLogger(__name__)
-
-
-def build_argparse() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="run.py",
-        # TODO: Write custom usage thingy https://stackoverflow.com/a/75217910
-        # Want to use programmatic usage, but want the "-- cmd [cmd ...]" to be generated
-        description="Run a Firesim simulation",
-        epilog="Lovingly made by NCW, Atmn, and KGH.",
-        add_help=True,
-        # NOTE: color= added by 3.14
-        # color=utils.supports_color() and utils.wants_color(),
-    )
-    args.sim_config(parser)
-    args.overlay_path(parser)
-    args.sim_img(parser)
-    args.sim_prog(parser)
-    args.log_dir(parser)
-    args.run_name(parser)
-    parser.add_argument(
-        "-p",
-        "--print-start",
-        dest="print_start",
-        action="store",
-        default=-1,
-        help=inspect.cleandoc("""Clock cycle to begin emitting trace printing
-        from the core."""),
-    )
-    parser.add_argument(
-        "cmd",
-        nargs="+",
-        help=inspect.cleandoc("""Commands & Flags (in shell syntax) to run
-        inside Firesim."""),
-    )
-    args.verbose(parser)
-    args.dry_run(parser)
-
-    return parser
 
 
 def validate_sim_config(sim_config: Path) -> bool:
@@ -459,32 +419,25 @@ def run_simulation(
         os.environ["LD_LIBRARY_PATH"] = old_ld_library_path
 
 
-def main() -> None:
-    parser = build_argparse()
-    args = parser.parse_args()
-    utils.dry_run = args.dry_run
-    logging.basicConfig(
-        format="%(levelname)s:%(name)s:%(funcName)s:%(lineno)d:%(message)s",
-        level=logging.DEBUG if args.verbose > 0 else logging.INFO,
-    )
-    logger.debug(f"Running with {args=!s}")
-    logger.debug(f"Command to run INSIDE Firesim: {args.cmd=!s}")
-
-    if validate_args(args):
-        logger.debug(f"{args=!s} are valid!")
-    else:
-        logger.error(f"{args=!s} are INVALID! ABORTING!")
+def run(
+    run_name: str,
+    sim_config: Path,
+    overlay_path: Path,
+    sim_img: Path,
+    sim_prog: Path,
+    log_dir: Path,
+    print_start: int,
+    cmd,
+    **kwargs,
+) -> None:
+    logger.debug(f"Command to run INSIDE Firesim: {cmd=!s}")
 
     # XXX: Writing firesim.sh MUST come before doing the disk image overlay!
     # If you don't do it, then the simulation will NOT have a /firesim.sh script
     # to run when it finishes booting.
-    write_firesim_sh(args.overlay_path, args.cmd)
+    write_firesim_sh(overlay_path, cmd)
 
-    log_dir_latest = update_log_files(args.log_dir, args.run_name)
+    log_dir_latest = update_log_files(log_dir, run_name)
 
-    infrasetup(args.sim_config, args.overlay_path, args.sim_img)
-    run_simulation(args.sim_config, args.sim_img, args.sim_prog, log_dir_latest, args.print_start)
-
-
-if __name__ == "__main__":
-    main()
+    infrasetup(sim_config, overlay_path, sim_img)
+    run_simulation(sim_config, sim_img, sim_prog, log_dir_latest, print_start)

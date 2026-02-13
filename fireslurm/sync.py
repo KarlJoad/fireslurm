@@ -12,59 +12,15 @@ This tool takes the contents that FireSim installs on the simulation host with
 versioned. This prevents FireSlurm from losing previous configurations.
 """
 
-import argparse
-import inspect
 import logging
 import os
 from pathlib import Path
 from datetime import datetime
 
-import args as args
-import utils as utils
+import fireslurm.utils as utils
 
 
 logger = logging.getLogger(__name__)
-
-
-def build_argparse() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="sync.py",
-        description="Synchronize a Firesim simulation directory for later use",
-        epilog="Lovingly made by NCW, Atmn, and KGH.",
-        add_help=True,
-    )
-    parser.add_argument(
-        "--config-name",
-        dest="config_name",
-        required=True,
-        type=str,
-        help=inspect.cleandoc("""Name for this new FireSim configuration."""),
-    )
-    parser.add_argument(
-        "--description",
-        type=str,
-        help=inspect.cleandoc("""Description of the kind of Firechip simulation design this is."""),
-    )
-    parser.add_argument(
-        "--config-dir",
-        dest="config_dir",
-        required=True,
-        type=Path,
-        help=inspect.cleandoc("""Path to the configuration directory for Firesim
-        and FireSlurm."""),
-    )
-    parser.add_argument(
-        "--infrasetup-target",
-        dest="infrasetup_target",
-        required=True,
-        type=Path,
-        help=inspect.cleandoc("""Path to the directory that firesim's infrasetup
-        command targeted.
-        This directory should contain the driver-bundle.tar.gz and
-        firesim.tar.gz."""),
-    )
-    args.verbose(parser)
-    return parser
 
 
 def build_config_dir(config_dir: Path, config_name: str) -> Path:
@@ -131,23 +87,17 @@ def unzip_firesim_libs(compressed_tarball: Path, decompress_target: Path) -> Non
     utils.run_cmd(tar_cmd)
 
 
-def main() -> None:
-    parser = build_argparse()
-    args = parser.parse_args()
-    logging.basicConfig(
-        format="%(levelname)s:%(name)s:%(funcName)s:%(lineno)d:%(message)s",
-        level=logging.DEBUG if args.verbose > 0 else logging.INFO,
-    )
-    logger.debug(f"Running with {args=!s}")
+def sync(
+    sim_config: Path,
+    config_name: str,
+    infrasetup_target: Path,
+    description: str,
+    **kwargs,
+) -> None:
+    config_dir = build_config_dir(sim_config, config_name)
 
-    config_dir = build_config_dir(args.config_dir, args.config_name)
-
-    unzip_firesim_libs(args.infrasetup_target / "driver-bundle.tar.gz", config_dir)
-    unzip_firesim_libs(args.infrasetup_target / "firesim.tar.gz", config_dir)
+    unzip_firesim_libs(infrasetup_target / "driver-bundle.tar.gz", config_dir)
+    unzip_firesim_libs(infrasetup_target / "firesim.tar.gz", config_dir)
 
     with open(config_dir / "description.txt", "w") as desc_file:
-        desc_file.write(args.description)
-
-
-if __name__ == "__main__":
-    main()
+        desc_file.write(description)

@@ -8,7 +8,6 @@ to Slurm, so each run is kept isolated from one another. Eventually, Slurm will
 pick up the job and run the run.py script on a FireSim-enabled machine.
 """
 
-import argparse
 import inspect
 import logging
 from pathlib import Path
@@ -18,8 +17,7 @@ import re
 import textwrap
 import shutil
 
-import args as args
-import utils as utils
+import fireslurm.utils as utils
 
 
 logger = logging.getLogger(__name__)
@@ -35,30 +33,6 @@ class JobInfo:
     """The numerical ID Slurm assigned this job."""
 
 
-def build_argparser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="batch.py",
-        description="Batch up and submit Firesim jobs to Slurm",
-        epilog="Lovingly made by NCW, Atmn, and KGH.",
-        add_help=True,
-    )
-    args.sim_config(parser)
-    args.run_name(parser)
-    args.overlay_path(parser)
-    args.sim_img(parser)
-    args.sim_prog(parser)
-    args.log_dir(parser)
-    parser.add_argument(
-        "--results-dir",
-        dest="results_dir",
-        required=True,
-        type=Path,
-        help=inspect.cleandoc("""Path to where results extracted from FireSim's
-        outputs should be placed."""),
-    )
-    args.verbose(parser)
-    args.dry_run(parser)
-    return parser
 
 
 def build_job_script_contents(
@@ -88,6 +62,7 @@ def build_job_script_contents(
     echo "Running {run_py.resolve()!s}"
     python3 {run_py.resolve()!s} \\
             {verbose_flag!s} \\
+            run \\
             --run-name {run_name!s} \\
             --sim-config {config_dir.resolve()!s} \\
             --overlay-path {overlay_path.resolve()!s} \\
@@ -201,45 +176,42 @@ def submit_slurm_job(
     return job
 
 
-def main() -> None:
-    parser = build_argparser()
-    args = parser.parse_args()
-    utils.dry_run = args.dry_run
-    logging.basicConfig(
-        format="%(levelname)s:%(name)s:%(funcName)s:%(lineno)d:%(message)s",
-        level=logging.DEBUG if args.verbose > 0 else logging.INFO,
-    )
-    logger.debug(f"Running with {args=!s}")
+def batch(
+    run_name: str,
+    sim_config: Path,
+    overlay_path: Path,
+    sim_img: Path,
+    sim_prog: Path,
+    log_dir: Path,
+    results_dir: Path,
+    verbosity: int,
+    **kwargs,
+) -> None:
+    JOB_NAME = f"super-duper-quick-test-{run_name}"
 
-    JOB_NAME = f"super-duper-quick-test-{args.run_name}"
-
-    args.log_dir.mkdir(parents=True, exist_ok=True)
+    log_dir.mkdir(parents=True, exist_ok=True)
 
     job_file = build_sbatch_script(
-        args.sim_config,
-        args.overlay_path,
-        args.sim_img,
-        args.sim_prog,
-        args.log_dir,
-        args.results_dir,
+        sim_config,
+        overlay_path,
+        sim_img,
+        sim_prog,
+        log_dir,
+        results_dir,
         JOB_NAME,
-        args.verbose,
+        verbosity,
         'echo "Hello from fireslurm!"; ls -lah',
     )
 
     # XXX: Slurm will not create directories to the STDOUT/STDERR paths that we
     # specify with the --output/--error flags to sbatch. So we must do it
     # ourself.
-    slurm_log_dir = args.log_dir / "slurm-log"
+    slurm_log_dir = log_dir / "slurm-log"
     slurm_log_dir.mkdir(parents=True, exist_ok=True)
 
     _job = submit_slurm_job(
         JOB_NAME,
         job_file,
-        args.log_dir / "slurm-log/%j.out",
-        args.verbose,
+        log_dir / "slurm-log/%j.out",
+        verbosity,
     )
-
-
-if __name__ == "__main__":
-    main()

@@ -16,6 +16,9 @@ Documentation = "https://github.com/karljoad/firesim-slurm"
 Repository = "https://github.com/karljoad/firesim-slurm.git"
 Issues = "https://github.com/karljoad/firesim-slurm/issues"
 
+[project.scripts]
+fireslurm = "fireslurm.__main__:main"
+
 [build-system]
 requires = [
     "installer == 0.7.0",  # Needed for installing pure python packages at build time
