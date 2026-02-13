@@ -163,7 +163,7 @@ def validate_args(args: argparse.Namespace) -> bool:
 
 
 def write_firesim_sh(
-    overlay_path: Path,
+    dest_dir: Path,
     cmd: str,
 ) -> Path:
     """
@@ -171,7 +171,7 @@ def write_firesim_sh(
     Returns the path to the "firesim.sh" script.
     """
     logger.debug("Building firesim.sh")
-    FIRESIM_SH = overlay_path / "firesim.sh"
+    FIRESIM_SH = dest_dir / "firesim.sh"
     perms = stat.S_IFREG | stat.S_IRWXU | stat.S_IRWXG | stat.S_IROTH
 
     logger.debug(f"Command to run as seen by firesim.sh: {cmd=!r}")
@@ -267,9 +267,7 @@ def overlay_disk_image(overlay_path: Path, sim_img: Path) -> None:
     Overlay the file system tree in OVERLAY_PATH to SIM_IMG.
     """
     logger.info(f"Overlaying contents of {overlay_path} onto {sim_img}")
-    assert (overlay_path / "firesim.sh").exists(), (
-        "Firesim.sh script must be made before overlaying disk image"
-    )
+
     # XXX: mountpoint is relative to CWD of the script!
     mountpoint = Path("mountpoint")
     mountpoint.mkdir(exist_ok=True)
@@ -434,10 +432,36 @@ def run(
 ) -> None:
     logger.debug(f"Command to run INSIDE Firesim: {cmd=!s}")
 
-    # XXX: Writing firesim.sh MUST come before doing the disk image overlay!
-    # If you don't do it, then the simulation will NOT have a /firesim.sh script
-    # to run when it finishes booting.
-    write_firesim_sh(overlay_path, cmd)
+    # If the user did not provide a command to us, then we assume that this
+    # invocation was meant for an interactive run of FireSim and the user will
+    # be connected to the prompt immediately. They are entirely responsible for
+    # handling the simulation at this point.
+    interactive_run = cmd is None or cmd == ""
+
+    mountpoint = Path("mountpoint")
+    mountpoint.mkdir(exist_ok=True)
+
+    # If the user did not provide us with a command, then they want an
+    # interactive simulation, which means we need to clean up the disk image.
+    # We must remove /firesim.sh, since that is what is executed by FireSim's
+    # boot process. If this is a non-interactive job, then we install the script
+    # to /firesim.sh.
+    if interactive_run:
+        logger.warning(
+            "You did not provide a command to use in firesim.sh. Proceeding with INTERACTIVE simulation!"
+        )
+        with utils.mount_img(sim_img.resolve(), mountpoint.resolve()):
+            old_firesim_sh = mountpoint / "firesim.sh"
+            old_firesim_sh.unlink(missing_ok=True)
+            del old_firesim_sh
+    else:
+        logger.info(
+            "You provided a command to use in firesim.sh. Building firesim.sh for automatic execution."
+        )
+        firesim_sh = write_firesim_sh(sim_config, cmd)
+        logger.debug(f"Overlaying {firesim_sh=!s} to {mountpoint=!s}")
+        with utils.mount_img(sim_img.resolve(), mountpoint.resolve()):
+            shutil.copy(firesim_sh.resolve(), mountpoint.resolve())
 
     log_dir_latest = update_log_files(log_dir, run_name)
 
