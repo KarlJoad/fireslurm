@@ -38,6 +38,8 @@ import pty
 
 import fireslurm.utils as utils
 import fireslurm.validation as validate
+from fireslurm.slurm import JobInfo
+import fireslurm.zipper as fzipper
 
 
 logger = logging.getLogger(__name__)
@@ -466,3 +468,63 @@ def run(
 
     infrasetup(sim_config, overlay_path, sim_img)
     run_simulation(sim_config, sim_img, sim_prog, log_dir_latest, print_start)
+
+
+def run_srun(
+    run_name: str,
+    sim_config: Path,
+    overlay_path: Path,
+    sim_img: Path,
+    sim_prog: Path,
+    log_dir: Path,
+    print_start: int,
+    verbosity: int,
+    slurm_partitions: str,
+    slurm_nodelist: str,
+    cmd: str,
+    **kwargs,
+) -> JobInfo:
+    """
+    Run the Slurm job in an interactive "srun" session.
+    """
+    logger.debug("Building the sbatch submission script's contents!")
+
+    verbose_flag = "-" + "v" * verbosity if verbosity > 0 else ""
+    job_run_py = fzipper.build_job_run_py(sim_config / "fireslurm.pyz")
+
+    # fmt: off
+    fireslurm_cmd = [
+        "python3",
+        job_run_py.resolve(),
+        verbose_flag,
+        "run",
+        "--run-name", run_name,
+        "--sim-config", sim_config.resolve(),
+        "--overlay-path", overlay_path.resolve(),
+        "--sim-img", sim_img.resolve(),
+        "--sim-prog", sim_prog.resolve(),
+        "--log-dir", log_dir.resolve(),
+        "--",
+        cmd,
+    ]
+    # fmt: on
+    logger.debug(f"{fireslurm_cmd=!s}")
+
+    # fmt: off
+    srun_cmd = [
+        "srun",
+        "--partition", slurm_partitions,
+        "--nodelist", slurm_nodelist,
+        "--exclusive",
+    ] + fireslurm_cmd
+    # fmt: on
+    logger.debug(f"{srun_cmd=!s}")
+
+    _proc = subprocess.run(
+        srun_cmd + fireslurm_cmd,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        # text=True,
+        check=True,
+    )

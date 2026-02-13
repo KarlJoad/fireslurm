@@ -76,6 +76,35 @@ def build_run_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentPar
     return run_parser
 
 
+def build_srun_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    srun_parser = subparser.add_parser(
+        "srun",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        help=inspect.cleandoc("""Run a FireSim simulation under Slurm with srun"""),
+    )
+    srun_parser.set_defaults(func=fireslurm.run.run_srun)
+    args.sim_config(srun_parser)
+    args.overlay_path(srun_parser)
+    args.sim_img(srun_parser)
+    args.sim_prog(srun_parser)
+    args.partition(srun_parser)
+    args.nodelist(srun_parser)
+    args.log_dir(srun_parser)
+    args.run_name(srun_parser)
+    srun_parser.add_argument(
+        "-s",
+        "--print-start",
+        dest="print_start",
+        action="store",
+        default=-1,
+        help=inspect.cleandoc("""Clock cycle to begin emitting trace printing
+        from the core."""),
+    )
+    args.cmd(srun_parser)
+    args.dry_run(srun_parser)
+    return srun_parser
+
+
 def build_batch_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     batch_parser = subparser.add_parser(
         "batch",
@@ -120,6 +149,7 @@ def build_argparser() -> argparse.ArgumentParser:
     )
     _sync_parser = build_sync_parser(subparsers)
     _run_parser = build_run_parser(subparsers)
+    _srun_parser = build_srun_parser(subparsers)
     _batch_parser = build_batch_parser(subparsers)
 
     return parser
