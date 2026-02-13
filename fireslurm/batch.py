@@ -11,26 +11,16 @@ pick up the job and run the run.py script on a FireSim-enabled machine.
 import inspect
 import logging
 from pathlib import Path
-from dataclasses import dataclass
 import subprocess
 import re
 import textwrap
 import zipapp
 
 import fireslurm.utils as utils
+from fireslurm.slurm import JobInfo
 
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class JobInfo:
-    """
-    Class containing information about a submitted Slurm job.
-    """
-
-    id: int
-    """The numerical ID Slurm assigned this job."""
 
 
 def build_job_run_py(target) -> Path:
