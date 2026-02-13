@@ -71,12 +71,7 @@ def build_run_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentPar
         help=inspect.cleandoc("""Clock cycle to begin emitting trace printing
         from the core."""),
     )
-    run_parser.add_argument(
-        "cmd",
-        nargs="+",
-        help=inspect.cleandoc("""Commands & Flags (in shell syntax) to run
-        inside Firesim."""),
-    )
+    args.cmd(run_parser)
     args.dry_run(run_parser)
     return run_parser
 
@@ -129,6 +124,7 @@ def build_batch_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentP
         help=inspect.cleandoc("""Path to where results extracted from FireSim's
         outputs should be placed."""),
     )
+    args.cmd(batch_parser)
     return batch_parser
 
 
@@ -162,6 +158,12 @@ def main():
         level=logging.DEBUG if args.verbosity > 0 else logging.INFO,
     )
     logger.debug(f"Running with {args=!s}")
+
+    if vars(args).get("cmd", None) is not None:
+        logger.debug(f"Consolidating {args.cmd=!s} to single string")
+        args.cmd = " ; ".join(args.cmd)
+        logger.debug(f"Consolidated {args.cmd=!r}")
+
     args.func(**vars(args))
 
 

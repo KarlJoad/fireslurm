@@ -93,6 +93,18 @@ def sim_prog(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def cmd(parser: argparse.ArgumentParser) -> None:
+    """
+    Add support for -- cmd [cmd ...] to PARSER.
+    """
+    parser.add_argument(
+        "cmd",
+        nargs="*",
+        help=inspect.cleandoc("""Commands & Flags (in shell syntax) to run
+        inside Firesim."""),
+    )
+
+
 def verbose(parser: argparse.ArgumentParser) -> None:
     """
     Add the -v/--verbose flag to PARSER.

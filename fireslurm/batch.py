@@ -87,7 +87,7 @@ def build_job_script_contents(
     run_name: str,
     run_py: Path,
     verbosity: int,
-    cmd,
+    cmd: str,
 ) -> str:
     """
     Assemble and return a string that will be used as the contents of the script
@@ -124,7 +124,7 @@ def build_sbatch_script(
     results_dir: Path,
     run_name: str,
     verbosity: int,
-    cmd,
+    cmd: str,
 ) -> Path:
     """
     Return the path to the generated script that will be given to sbatch.
@@ -231,6 +231,7 @@ def batch(
     verbosity: int,
     slurm_partitions: str,
     slurm_nodelist: str,
+    cmd: str,
     **kwargs,
 ) -> None:
     JOB_NAME = f"super-duper-quick-test-{run_name}"
@@ -246,7 +247,7 @@ def batch(
         results_dir,
         JOB_NAME,
         verbosity,
-        'echo "Hello from fireslurm!"; ls -lah',
+        cmd,
     )
 
     # XXX: Slurm will not create directories to the STDOUT/STDERR paths that we

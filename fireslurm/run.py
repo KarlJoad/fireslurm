@@ -27,7 +27,7 @@ import argparse
 import logging
 import os
 from pathlib import Path
-from typing import List, Union
+from typing import List
 import stat
 import textwrap
 from datetime import datetime
@@ -162,7 +162,10 @@ def validate_args(args: argparse.Namespace) -> bool:
     )
 
 
-def write_firesim_sh(overlay_path: Path, cmd: Union[List[str], List[Path]]) -> Path:
+def write_firesim_sh(
+    overlay_path: Path,
+    cmd: str,
+) -> Path:
     """
     Write the programs/scripts/whatever to run INSIDE the Firesim simulation.
     Returns the path to the "firesim.sh" script.
@@ -170,7 +173,7 @@ def write_firesim_sh(overlay_path: Path, cmd: Union[List[str], List[Path]]) -> P
     logger.debug("Building firesim.sh")
     FIRESIM_SH = overlay_path / "firesim.sh"
     perms = stat.S_IFREG | stat.S_IRWXU | stat.S_IRWXG | stat.S_IROTH
-    cmd = " ".join(cmd)
+
     logger.debug(f"Command to run as seen by firesim.sh: {cmd=!r}")
     contents = textwrap.dedent(f"""\
     #!/bin/sh
@@ -427,7 +430,7 @@ def run(
     sim_prog: Path,
     log_dir: Path,
     print_start: int,
-    cmd,
+    cmd: str,
     **kwargs,
 ) -> None:
     logger.debug(f"Command to run INSIDE Firesim: {cmd=!s}")
