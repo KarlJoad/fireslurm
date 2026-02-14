@@ -515,6 +515,11 @@ def run_srun(
         "srun",
         "--partition", slurm_partitions,
         "--nodelist", slurm_nodelist,
+        # XXX: We make the srun run in a PTY and unbuffered so that we can
+        # stream the simulator's output to the user live and correctly, making
+        # this seem like a truly interactive process.
+        "--pty",
+        "--unbuffered",
         "--exclusive",
     ] + fireslurm_cmd
     # fmt: on
