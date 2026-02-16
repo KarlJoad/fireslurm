@@ -521,15 +521,15 @@ def run_srun(
         "--pty",
         "--unbuffered",
         "--exclusive",
-    ] + fireslurm_cmd
+    ]
     # fmt: on
     logger.debug(f"{srun_cmd=!s}")
 
-    _proc = subprocess.run(
-        srun_cmd + fireslurm_cmd,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        # text=True,
-        check=True,
-    )
+    whole_srun_cmd = srun_cmd + fireslurm_cmd
+
+    # We use PTY spawn because it just does "the right thing". Making
+    # subprocess.Popen work with the PTY stack between Slurm and us, and then
+    # again between Slurm and the simulation make things very difficult to get
+    # right. If we _really_ need to slice-and-dice this output and not the
+    # logged uartlog output, then we can rewrite this to use subprocess.Popen.
+    pty.spawn(whole_srun_cmd)
