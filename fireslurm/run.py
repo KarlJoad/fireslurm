@@ -421,6 +421,13 @@ def run_simulation(
         os.environ["LD_LIBRARY_PATH"] = old_ld_library_path
 
 
+def _is_interactive_run(cmd: str) -> bool:
+    """
+    Determine if CMD is being used for an interactive run of FireSim.
+    """
+    return cmd is None or cmd == ""
+
+
 def run(
     run_name: str,
     sim_config: Path,
@@ -438,7 +445,8 @@ def run(
     # invocation was meant for an interactive run of FireSim and the user will
     # be connected to the prompt immediately. They are entirely responsible for
     # handling the simulation at this point.
-    interactive_run = cmd is None or cmd == ""
+    interactive_run = _is_interactive_run(cmd)
+    logger.info(f"Running this job as interactive?: {interactive_run}")
 
     mountpoint = Path("mountpoint")
     mountpoint.mkdir(exist_ok=True)
@@ -492,6 +500,9 @@ def run_srun(
 
     verbose_flag = "-" + "v" * verbosity if verbosity > 0 else ""
     job_run_py = fzipper.build_job_run_py(sim_config / "fireslurm.pyz")
+
+    interactive_run = _is_interactive_run(cmd)
+    logger.info(f"Running this job as interactive?: {interactive_run}")
 
     # fmt: off
     fireslurm_cmd = [
