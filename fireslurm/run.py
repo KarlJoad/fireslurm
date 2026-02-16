@@ -391,6 +391,7 @@ def run_simulation(
                 stdin=slave,
                 # text=True,
                 bufsize=0,
+                start_new_session=True,
             ) as proc,
         ):
             # Close slave in parent process
