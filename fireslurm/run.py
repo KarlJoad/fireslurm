@@ -522,11 +522,13 @@ def run_srun(
     # fmt: on
     logger.debug(f"{fireslurm_cmd=!s}")
 
+    job_name = run_name + "-interactive" if interactive_run else run_name
     # fmt: off
     srun_cmd = [
         "srun",
         "--partition", slurm_partitions,
         "--nodelist", slurm_nodelist,
+        "--job-name", job_name,
         # XXX: We make the srun run in a PTY and unbuffered so that we can
         # stream the simulator's output to the user live and correctly, making
         # this seem like a truly interactive process.
