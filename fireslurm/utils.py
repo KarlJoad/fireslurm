@@ -107,7 +107,7 @@ def mount_img(img: Path, mountpoint: Path):
 
 @contextmanager
 def block_sigint():
-    logger.info("Begin ignoring SIGINT! C-c will not work!")
+    logger.warning("Begin ignoring SIGINT! C-c will not work!")
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     yield
     logger.info("End ignoring SIGINT! C-c will now work!")
