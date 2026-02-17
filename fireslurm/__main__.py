@@ -49,13 +49,17 @@ def build_sync_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentPa
     return sync_parser
 
 
-def build_run_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+def build_direct_run_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     run_parser = subparser.add_parser(
-        "run",
+        "direct-run",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        help=inspect.cleandoc("""Run a FireSim simulation"""),
+        help=inspect.cleandoc("""Run a FireSim simulation directly. This
+        bypasses Slurm entirely to run the simulation.
+        WARNING: Do not use this unless you know what you are doing! This
+        subcommand is primarily intended for internal use, not end-user
+        command-line!"""),
     )
-    run_parser.set_defaults(func=fireslurm.run.run)
+    run_parser.set_defaults(func=fireslurm.run._run)
     args.sim_config(run_parser)
     args.overlay_path(run_parser)
     args.sim_img(run_parser)
@@ -76,13 +80,13 @@ def build_run_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentPar
     return run_parser
 
 
-def build_srun_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+def build_run_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     srun_parser = subparser.add_parser(
-        "srun",
+        "run",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         help=inspect.cleandoc("""Run a FireSim simulation under Slurm with srun"""),
     )
-    srun_parser.set_defaults(func=fireslurm.run.run_srun)
+    srun_parser.set_defaults(func=fireslurm.run.run)
     args.sim_config(srun_parser)
     args.overlay_path(srun_parser)
     args.sim_img(srun_parser)
@@ -148,8 +152,8 @@ def build_argparser() -> argparse.ArgumentParser:
         help=inspect.cleandoc("""Available Commands"""),
     )
     _sync_parser = build_sync_parser(subparsers)
-    _run_parser = build_run_parser(subparsers)
-    _srun_parser = build_srun_parser(subparsers)
+    _run_parser = build_direct_run_parser(subparsers)
+    _srun_parser = build_run_parser(subparsers)
     _batch_parser = build_batch_parser(subparsers)
 
     return parser

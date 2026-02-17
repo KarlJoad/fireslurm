@@ -428,7 +428,7 @@ def _is_interactive_run(cmd: str) -> bool:
     return cmd is None or cmd == ""
 
 
-def run(
+def _run(
     run_name: str,
     sim_config: Path,
     overlay_path: Path,
@@ -479,7 +479,7 @@ def run(
     run_simulation(sim_config, sim_img, sim_prog, log_dir_latest, print_start)
 
 
-def run_srun(
+def run(
     run_name: str,
     sim_config: Path,
     overlay_path: Path,
@@ -509,7 +509,7 @@ def run_srun(
         "python3",
         job_run_py.resolve(),
         verbose_flag,
-        "run",
+        "direct-run",
         "--run-name", run_name,
         "--sim-config", sim_config.resolve(),
         "--overlay-path", overlay_path.resolve(),

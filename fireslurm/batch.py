@@ -48,7 +48,7 @@ def build_job_script_contents(
     echo "Running {run_py.resolve()!s}"
     python3 {run_py.resolve()!s} \\
             {verbose_flag!s} \\
-            run \\
+            direct-run \\
             --run-name {run_name!s} \\
             --sim-config {config_dir.resolve()!s} \\
             --overlay-path {overlay_path.resolve()!s} \\
