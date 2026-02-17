@@ -39,6 +39,9 @@ def build_job_script_contents(
     """
     logger.debug("Building the sbatch submission script's contents!")
 
+    # We can get away with setting the verbosity this way and then just
+    # inserting the empty string into the shell command because sbatch runs a
+    # shell command. This means the empty string is effectively thrown away.
     verbose_flag = "-" + "v" * verbosity if verbosity > 0 else ""
 
     return textwrap.dedent(f"""\

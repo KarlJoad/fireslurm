@@ -503,7 +503,11 @@ def run(
     fireslurm_cmd = [
         "python3",
         job_run_py.resolve(),
-        verbose_flag,
+    ]
+    if verbosity:
+        fireslurm_cmd += verbose_flag
+
+    fireslurm_cmd += [
         "direct-run",
         "--run-name", run_name,
         "--sim-config", sim_config.resolve(),
