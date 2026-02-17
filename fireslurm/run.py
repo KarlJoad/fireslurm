@@ -14,10 +14,6 @@ This program sets up FireSim and runs it. This involves:
 NOTE: This script does ***NOT*** run inside the simulation!
 """
 
-# fmt: off
-#SBATCH --error=slurm-%j.err
-# fmt: on
-
 import sys
 
 if sys.version_info[0] < 3:
@@ -389,7 +385,6 @@ def run_simulation(
                 stdout=slave,
                 stderr=slave,
                 stdin=slave,
-                # text=True,
                 bufsize=0,
                 start_new_session=True,
             ) as proc,
