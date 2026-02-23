@@ -137,11 +137,14 @@ def submit_slurm_job(
     # XXX: The job script MUST come last! Flags to sbatch must be provided
     sbatch_cmd += [f"{job_file.resolve()!s}"]
 
+    logger.debug(f"{sbatch_cmd=!s}")
+
     # sbatch is unique because the sbatch command also has a dry-run flag to
     # help estimate when your job allocation might be run. So we ALWAYS run
     # the sbatch command, even if the user selected a dry-run.
     if utils.dry_run:
         utils.run_cmd(sbatch_cmd)
+
     proc = subprocess.run(
         sbatch_cmd,
         capture_output=True,
