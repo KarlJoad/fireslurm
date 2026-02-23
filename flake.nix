@@ -32,6 +32,13 @@
               pythonEnv = pkgs.python3.withPackages (ps: with ps; [
                 ruff
                 uv
+                # pyproject.toml stuff
+                installer
+                packaging
+                pyproject-hooks
+                wheel
+                build
+                setuptools
               ]);
 
           in {
