@@ -22,8 +22,9 @@ This is a significant departure from how FireSim normally works, which requireds
 
 ## Usage
 All FireSlurm operations can be started in the usual ways:
-  - `python3 -m fireslurm <cmd>`
-  - `/path/to/fireslurm.py <cmd>`
+  - `python3 -m fireslurm <cmd>`, if the `src/` directory is in your `PYTHONPATH` environment variable.
+  - `/path/to/fireslurm.py <cmd>`, for global usage, but is not recommended.
+  - `uv run fireslurm`, for local usage with `uv` handling all the complicated path stuff.
 
 These should be identical.
 All examples below use the small `fireslurm.py` wrapper script.
