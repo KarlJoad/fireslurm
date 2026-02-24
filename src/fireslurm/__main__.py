@@ -68,6 +68,19 @@ def run(fireslurm_config: config.FireSlurmConfig, args: argparse.Namespace) -> N
     fireslurm.run.run(run_config)
 
 
+def batch(fireslurm_config: config.FireSlurmConfig, args: argparse.Namespace) -> None:
+    batch_config = config.BatchConfig(
+        **asdict(fireslurm_config),
+        run_name=args.run_name,
+        cmd=args.cmd,
+        slurm_output=fireslurm_config.log_dir / "slurm-log/%j.out",
+        slurm_error=fireslurm_config.log_dir / "slurm-log/%j.err",
+    )
+    logger.info("Running FireSlurm job with sbatch")
+    logger.debug(f"{batch_config=!s}")
+    fireslurm.batch.batch(batch_config)
+
+
 def build_sync_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     sync_parser = subparser.add_parser(
         FireSlurmCommands.SYNC.value,
@@ -169,7 +182,7 @@ def build_batch_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentP
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         help=inspect.cleandoc("""Submit a FireSim simulation job to Slurm using sbatch"""),
     )
-    batch_parser.set_defaults(func=fireslurm.batch.batch)
+    batch_parser.set_defaults(func=batch)
     args.sim_config(batch_parser)
     args.run_name(batch_parser)
     args.overlay_path(batch_parser)
