@@ -505,7 +505,7 @@ def run(
         job_run_py.resolve(),
     ]
     if verbosity:
-        fireslurm_cmd += verbose_flag
+        fireslurm_cmd.append(verbose_flag)
 
     fireslurm_cmd += [
         "direct-run",
