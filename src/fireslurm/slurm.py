@@ -7,5 +7,5 @@ class JobInfo:
     Class containing information about a submitted Slurm job.
     """
 
-    id: int
+    slurm_job_id: int
     """The numerical ID Slurm assigned this job."""
