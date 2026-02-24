@@ -185,7 +185,7 @@ def batch(
     slurm_nodelist: str,
     cmd: str,
     **kwargs,
-) -> None:
+) -> JobInfo:
     JOB_NAME = f"super-duper-quick-test-{run_name}"
 
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -208,7 +208,7 @@ def batch(
     slurm_log_dir = log_dir / "slurm-log"
     slurm_log_dir.mkdir(parents=True, exist_ok=True)
 
-    _job = submit_slurm_job(
+    job = submit_slurm_job(
         JOB_NAME,
         job_file,
         log_dir / "slurm-log/%j.out",
@@ -216,3 +216,4 @@ def batch(
         slurm_partitions,
         slurm_nodelist,
     )
+    return job
