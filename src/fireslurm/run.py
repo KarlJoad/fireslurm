@@ -216,7 +216,7 @@ def update_log_files(log_dir: Path, log_name: str) -> Path:
         logger.info(f"{e} {latest_log}. Not removing.")
 
     # Register the now-current run as the latest log
-    os.symlink(src=current_run_log, dst=latest_log)
+    os.symlink(src=current_run_log.resolve(), dst=latest_log.resolve())
     logger.info(f"Marked {current_run_log} as latest in {log_dir}")
     return latest_log
 
