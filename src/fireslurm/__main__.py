@@ -42,6 +42,32 @@ def sync(fireslurm_config: config.FireSlurmConfig, args: argparse.Namespace) -> 
     return fireslurm.sync.sync(sync_config)
 
 
+def direct_run(fireslurm_config: config.FireSlurmConfig, args: argparse.Namespace) -> None:
+    run_config = config.RunConfig(
+        **asdict(fireslurm_config),
+        run_name=args.run_name,
+        cmd=args.cmd,
+    )
+    logger.info(
+        f"Running FireSim{' interactively' if run_config.is_interactive() else ' scripted'}"
+    )
+    logger.debug(f"{run_config=!s}")
+    fireslurm.run._run(run_config)
+
+
+def run(fireslurm_config: config.FireSlurmConfig, args: argparse.Namespace) -> None:
+    run_config = config.RunConfig(
+        **asdict(fireslurm_config),
+        run_name=args.run_name,
+        cmd=args.cmd,
+    )
+    logger.info(
+        f"Running FireSlurm job with srun{' interactively' if run_config.is_interactive() else ' scripted'}"
+    )
+    logger.debug(f"{run_config=!s}")
+    fireslurm.run.run(run_config)
+
+
 def build_sync_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     sync_parser = subparser.add_parser(
         FireSlurmCommands.SYNC.value,
@@ -87,7 +113,7 @@ def build_direct_run_parser(subparser: argparse.ArgumentParser) -> argparse.Argu
         subcommand is primarily intended for internal use, not end-user
         command-line!"""),
     )
-    run_parser.set_defaults(func=fireslurm.run._run)
+    run_parser.set_defaults(func=direct_run)
     args.sim_config(run_parser)
     args.overlay_path(run_parser)
     args.sim_img(run_parser)
@@ -114,7 +140,7 @@ def build_run_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentPar
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         help=inspect.cleandoc("""Run a FireSim simulation under Slurm with srun"""),
     )
-    srun_parser.set_defaults(func=fireslurm.run.run)
+    srun_parser.set_defaults(func=run)
     args.sim_config(srun_parser)
     args.overlay_path(srun_parser)
     args.sim_img(srun_parser)

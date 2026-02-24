@@ -32,6 +32,7 @@ import shutil
 import time
 import pty
 
+from fireslurm.config import RunConfig
 import fireslurm.utils as utils
 import fireslurm.validation as validate
 from fireslurm.slurm import JobInfo
@@ -217,7 +218,7 @@ def update_log_files(log_dir: Path, log_name: str) -> Path:
 
     # Register the now-current run as the latest log
     os.symlink(src=current_run_log.resolve(), dst=latest_log.resolve())
-    logger.info(f"Marked {current_run_log} as latest in {log_dir}")
+    logger.info(f"Marked {current_run_log.resolve()} as latest in {log_dir}")
     return latest_log
 
 
@@ -269,7 +270,7 @@ def overlay_disk_image(overlay_path: Path, sim_img: Path) -> None:
         shutil.copytree(overlay_path.resolve(), mountpoint.resolve(), dirs_exist_ok=True)
 
 
-def infrasetup(sim_config: Path, overlay_path: Path, sim_img: Path) -> None:
+def infrasetup(config: RunConfig) -> None:
     """
     Perform the same steps as "firesim infrasetup".
 
@@ -282,8 +283,8 @@ def infrasetup(sim_config: Path, overlay_path: Path, sim_img: Path) -> None:
     # operation. Getting interrupted can leave the FPGA in such a borked state
     # that we have to reflash Firesim's controllers to the FPGA.
     with utils.block_sigint():
-        flash_fpga(sim_config)
-        overlay_disk_image(overlay_path, sim_img)
+        flash_fpga(config.sim_config)
+        overlay_disk_image(config.overlay_path, config.sim_img)
 
         # XXX: We need a little bit of grace time between flashing the FPGA,
         # overlaying the disk image; and actually launching the simulation.
@@ -296,7 +297,8 @@ def infrasetup(sim_config: Path, overlay_path: Path, sim_img: Path) -> None:
 
 
 def build_firesim_cmd(
-    sim_config: Path, sim_img: Path, sim_prog: Path, log_dir: Path, print_start: int
+    config: RunConfig,
+    sim_log_dir: Path,
 ) -> List[str]:
     """
     Return a command string to run the Firesim simulation.
@@ -304,14 +306,14 @@ def build_firesim_cmd(
     """
     cmd = [
         "sudo",
-        f"{sim_config.resolve()}/FireSim-xilinx_vcu118",
+        f"{config.sim_config.resolve()}/FireSim-xilinx_vcu118",
         "+permissive",
-        f"+blkdev0={sim_img.resolve()}",
-        f"+blkdev-log0={log_dir.resolve()}/blkdev-log0",
+        f"+blkdev0={config.sim_img.resolve()}",
+        f"+blkdev-log0={config.log_dir.resolve()}/blkdev-log0",
         # XXX: +permissive-off MUST be followed by the binary to run!
         "+permissive-off",
-        f"+prog0={sim_prog.resolve()}",
-        f"+dwarf-file-name={sim_prog.resolve()}-dwarf",
+        f"+prog0={config.sim_prog.resolve()}",
+        f"+dwarf-file-name={config.sim_prog.resolve()}-dwarf",
         # "+blkdev1=${HOME}/yukon/yukon-br0-yukon-br.img",
         # "+tracefile=TRACEFILE",
         # "+trace-select=3",
@@ -319,8 +321,8 @@ def build_firesim_cmd(
         # "+trace-end=ffffffff00010013",
         # "+trace-output-format=0",
         "+autocounter-readrate=100000000",
-        f"+autocounter-filename-base={log_dir.resolve()}/AUTOCOUNTERFILE",
-        f"+print-start={print_start}",
+        f"+autocounter-filename-base={config.log_dir.resolve()}/AUTOCOUNTERFILE",
+        f"+print-start={config.print_start!s}",
         "+print-end=-1",
         # This NIC information is mandatory, even if it is not used
         "+macaddr0=00:12:6D:00:00:02",
@@ -342,19 +344,13 @@ def build_firesim_cmd(
 
 
 def run_simulation(
-    sim_config: Path,
-    sim_img: Path,
-    sim_prog: Path,
-    log_dir: Path,
-    print_start: int,
+    config: RunConfig,
+    sim_log_dir: Path,
 ) -> None:
-    fsim_cmd = build_firesim_cmd(
-        sim_config,
-        sim_img,
-        sim_prog,
-        log_dir,
-        print_start,
-    )
+    """
+    The log directory is the directory where THIS simulation run's logs will go.
+    """
+    fsim_cmd = build_firesim_cmd(config, sim_log_dir)
 
     with utils.change_sigint_key(sys.stdout.isatty()):
         # Create a pseudo-terminal
@@ -367,12 +363,12 @@ def run_simulation(
         (old_ld_library_path, _) = utils.extend_path(
             "LD_LIBRARY_PATH",
             [
-                sim_config.resolve(),
+                config.sim_config.resolve(),
             ],
         )
         # tty.intr = "^]"
         # All of this hoopla is to make uartlog go to both stdout and a file.
-        uartlog = log_dir / "uartlog"
+        uartlog = sim_log_dir / "uartlog"
         logger.info(f"Setting simulator's uartlog to {uartlog.resolve()}")
         with (
             open(uartlog, "w") as uartlog,
@@ -419,24 +415,14 @@ def _is_interactive_run(cmd: str) -> bool:
     return cmd is None or cmd == ""
 
 
-def _run(
-    run_name: str,
-    sim_config: Path,
-    overlay_path: Path,
-    sim_img: Path,
-    sim_prog: Path,
-    log_dir: Path,
-    print_start: int,
-    cmd: str,
-    **kwargs,
-) -> None:
-    logger.debug(f"Command to run INSIDE Firesim: {cmd=!s}")
+def _run(config: RunConfig) -> None:
+    logger.debug(f"Command to run INSIDE Firesim: {config.cmd=!s}")
 
     # If the user did not provide a command to us, then we assume that this
     # invocation was meant for an interactive run of FireSim and the user will
     # be connected to the prompt immediately. They are entirely responsible for
     # handling the simulation at this point.
-    interactive_run = _is_interactive_run(cmd)
+    interactive_run = config.is_interactive()
     logger.info(f"Running this job as interactive?: {interactive_run}")
 
     # If the user did not provide us with a command, then they want an
@@ -448,7 +434,7 @@ def _run(
         logger.warning(
             "You did not provide a command to use in firesim.sh. Proceeding with INTERACTIVE simulation!"
         )
-        with utils.mount_img(sim_img.resolve()) as mountpoint:
+        with utils.mount_img(config.sim_img.resolve()) as mountpoint:
             old_firesim_sh = mountpoint / "firesim.sh"
             old_firesim_sh.unlink(missing_ok=True)
             del old_firesim_sh
@@ -456,70 +442,57 @@ def _run(
         logger.info(
             "You provided a command to use in firesim.sh. Building firesim.sh for automatic execution."
         )
-        firesim_sh = write_firesim_sh(sim_config, cmd)
-        with utils.mount_img(sim_img.resolve()) as mountpoint:
+        firesim_sh = write_firesim_sh(config.sim_config, config.cmd)
+        with utils.mount_img(config.sim_img.resolve()) as mountpoint:
             logger.debug(f"Overlaying {firesim_sh=!s} to {mountpoint=!s}")
             shutil.copy(firesim_sh.resolve(), mountpoint.resolve())
 
-    log_dir_latest = update_log_files(log_dir, run_name)
+    log_dir_latest = update_log_files(config.log_dir, config.run_name)
 
-    infrasetup(sim_config, overlay_path, sim_img)
-    run_simulation(sim_config, sim_img, sim_prog, log_dir_latest, print_start)
+    infrasetup(config)
+    run_simulation(config, log_dir_latest)
 
 
-def run(
-    run_name: str,
-    sim_config: Path,
-    overlay_path: Path,
-    sim_img: Path,
-    sim_prog: Path,
-    log_dir: Path,
-    print_start: int,
-    verbosity: int,
-    slurm_partitions: str,
-    slurm_nodelist: str,
-    cmd: str,
-    **kwargs,
-) -> JobInfo:
+def run(config: RunConfig) -> JobInfo:
     """
     Run the Slurm job in an interactive "srun" session.
     """
     logger.debug("Building the sbatch submission script's contents!")
 
-    verbose_flag = "-" + "v" * verbosity if verbosity > 0 else ""
-    job_run_py = fzipper.build_job_run_py(sim_config / "fireslurm.pyz")
+    verbose_flag = "-" + "v" * config.verbosity if config.verbosity > 0 else ""
+    job_run_py = fzipper.build_job_run_py(config.sim_config / "fireslurm.pyz")
 
-    interactive_run = _is_interactive_run(cmd)
-    logger.info(f"Running this job as interactive?: {interactive_run}")
+    logger.info(f"Running this job as interactive?: {config.is_interactive()}")
 
     # fmt: off
     fireslurm_cmd = [
         "python3",
         job_run_py.resolve(),
     ]
-    if verbosity:
+    # TODO: Remove this conditional check!
+    if config.verbosity:
         fireslurm_cmd.append(verbose_flag)
 
     fireslurm_cmd += [
         "direct-run",
-        "--run-name", run_name,
-        "--sim-config", sim_config.resolve(),
-        "--overlay-path", overlay_path.resolve(),
-        "--sim-img", sim_img.resolve(),
-        "--sim-prog", sim_prog.resolve(),
-        "--log-dir", log_dir.resolve(),
+        "--run-name", config.run_name,
+        "--sim-config", config.sim_config.resolve(),
+        "--overlay-path", config.overlay_path.resolve(),
+        "--sim-img", config.sim_img.resolve(),
+        "--sim-prog", config.sim_prog.resolve(),
+        "--log-dir", config.log_dir.resolve(),
         "--",
-        cmd,
+        config.cmd,
     ]
     # fmt: on
     logger.debug(f"{fireslurm_cmd=!s}")
 
-    job_name = run_name + "-interactive" if interactive_run else run_name
+    job_name = config.run_name + "-interactive" if config.is_interactive() else config.run_name
     # fmt: off
     srun_cmd = [
         "srun",
-        "--partition", slurm_partitions,
-        "--nodelist", slurm_nodelist,
+        "--partition", ",".join(config.partitions),
+        "--nodelist", ",".join(config.nodelist),
         "--job-name", job_name,
         # XXX: We make the srun run in a PTY and unbuffered so that we can
         # stream the simulator's output to the user live and correctly, making
@@ -544,4 +517,4 @@ def run(
     # we are using pty.spawn), we never see Slurm's assigned job id. However,
     # because run hijacks the terminal for displaying the run as it is
     # happening, this is kind of a non-issue.
-    return JobInfo()
+    return JobInfo(run_id=config._run_id)
