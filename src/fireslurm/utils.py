@@ -7,6 +7,7 @@ import sys
 import subprocess
 from contextlib import contextmanager
 import signal
+import tempfile
 # import stty  # Comes from 3rd party
 
 
@@ -86,23 +87,23 @@ def run_cmd(cmd) -> Union[subprocess.CompletedProcess, None]:
 
 
 @contextmanager
-def mount_img(img: Path, mountpoint: Path):
+def mount_img(img: Path) -> Path:
     """
-    Attempt to mount IMG to MOUNTPOINT. If this is successful, then the dynamic
-    context (the contents of the with-block) are run with IMG mounted to
-    MOUNTPOINT.
+    Attempt to mount IMG to a temporary mountpoint. If this is successful, then
+    the dynamic context (the contents of the with-block) are run with IMG
+    mounted to the yielded path.
 
     If the mount or the contents of the block throw an exception, then the image
-    is sync-ed and unmounted before exiting.
+    is sync-ed and unmounted, and the temporary mountpoint removed before
+    exiting.
     """
-    try:
-        subprocess.run(
-            ["sudo", "mount", "-o", "loop", img.resolve(), mountpoint.resolve()], check=True
-        )
-        yield
-    finally:
-        subprocess.run(["sync"])
-        subprocess.run(["sudo", "umount", mountpoint.resolve()])
+    with tempfile.TemporaryDirectory() as temp_dir:
+        try:
+            subprocess.run(["sudo", "mount", "-o", "loop", img.resolve(), temp_dir], check=True)
+            yield Path(temp_dir)
+        finally:
+            subprocess.run(["sync"])
+            subprocess.run(["sudo", "umount", temp_dir])
 
 
 @contextmanager

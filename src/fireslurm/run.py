@@ -265,11 +265,7 @@ def overlay_disk_image(overlay_path: Path, sim_img: Path) -> None:
     Overlay the file system tree in OVERLAY_PATH to SIM_IMG.
     """
     logger.info(f"Overlaying contents of {overlay_path} onto {sim_img}")
-
-    # XXX: mountpoint is relative to CWD of the script!
-    mountpoint = Path("mountpoint")
-    mountpoint.mkdir(exist_ok=True)
-    with utils.mount_img(sim_img.resolve(), mountpoint.resolve()):
+    with utils.mount_img(sim_img.resolve()) as mountpoint:
         shutil.copytree(overlay_path.resolve(), mountpoint.resolve(), dirs_exist_ok=True)
 
 
@@ -443,9 +439,6 @@ def _run(
     interactive_run = _is_interactive_run(cmd)
     logger.info(f"Running this job as interactive?: {interactive_run}")
 
-    mountpoint = Path("mountpoint")
-    mountpoint.mkdir(exist_ok=True)
-
     # If the user did not provide us with a command, then they want an
     # interactive simulation, which means we need to clean up the disk image.
     # We must remove /firesim.sh, since that is what is executed by FireSim's
@@ -455,7 +448,7 @@ def _run(
         logger.warning(
             "You did not provide a command to use in firesim.sh. Proceeding with INTERACTIVE simulation!"
         )
-        with utils.mount_img(sim_img.resolve(), mountpoint.resolve()):
+        with utils.mount_img(sim_img.resolve()) as mountpoint:
             old_firesim_sh = mountpoint / "firesim.sh"
             old_firesim_sh.unlink(missing_ok=True)
             del old_firesim_sh
@@ -464,8 +457,8 @@ def _run(
             "You provided a command to use in firesim.sh. Building firesim.sh for automatic execution."
         )
         firesim_sh = write_firesim_sh(sim_config, cmd)
-        logger.debug(f"Overlaying {firesim_sh=!s} to {mountpoint=!s}")
-        with utils.mount_img(sim_img.resolve(), mountpoint.resolve()):
+        with utils.mount_img(sim_img.resolve()) as mountpoint:
+            logger.debug(f"Overlaying {firesim_sh=!s} to {mountpoint=!s}")
             shutil.copy(firesim_sh.resolve(), mountpoint.resolve())
 
     log_dir_latest = update_log_files(log_dir, run_name)
