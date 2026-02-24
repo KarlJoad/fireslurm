@@ -1,6 +1,33 @@
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from pathlib import Path
-from typing import List, Union
+from typing import List, Union, NewType
+import uuid
+import sys
+
+
+FireSlurmID = NewType("FireSlurmID", uuid.UUID)
+# The default value is the NIL UUID (uuid.NIL). The UUID with all 128 bits set
+# to 0. Python 3.14+ has this defined as a special value. We must construct it
+# ourselved on older Pythons.
+if sys.version_info < (3, 14):
+    DEFAULT_FIRESLURM_ID: FireSlurmID = uuid.UUID("00000000-0000-0000-0000-000000000000")
+else:
+    DEFAULT_FIRESLURM_ID: FireSlurmID = uuid.NIL
+
+
+def _run_uuid() -> FireSlurmID:
+    """
+    Return a UUID for FireSlurm runs.
+
+    On Python 3.14+, this is a UUID v7. On Python <3.14, this is a UUID v4.
+    """
+    f = None
+    if sys.version_info < (3, 14):
+        f = uuid.uuid4()
+    else:
+        f = uuid.uuid7()
+    assert f is not None, "You must have a UUID function to generate run IDs"
+    return f
 
 
 @dataclass(frozen=True)
@@ -49,6 +76,15 @@ class FireSlurmConfig:
     dry_run: bool = False
     """
     Should the run actually do anything or just print what would happen?
+    """
+
+    _run_id: FireSlurmID = field(default_factory=_run_uuid)
+    """
+    The ID of this FireSlurm configuration/run.
+
+    This should be treated as opaque and is not meant for users to construct or
+    manipulate. This is used by FireSlurm internally to track where everything
+    is happening across multiple FireSlurm runs across time.
     """
 
 
