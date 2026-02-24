@@ -220,3 +220,15 @@ __marimo__/
 
 # Testing versions of the firesim.sh script
 **firesim.sh**
+
+# Emacs auto-save files
+\#*\#
+# Emacs backup files
+*~
+.\#*
+
+# Vim temporary files
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-v][a-z]
+[._]sw[a-p]
