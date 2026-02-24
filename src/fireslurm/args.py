@@ -15,7 +15,7 @@ def sim_config(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--sim-config",
         dest="sim_config",
-        required=True,
+        required=False,
         type=Path,
         help=inspect.cleandoc("""Path to the simulation's configuration
         directory. This will/should include both the FireSim host-side program,
@@ -45,7 +45,7 @@ def log_dir(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--log-dir",
         dest="log_dir",
-        required=True,
+        required=False,
         type=Path,
         help=inspect.cleandoc("""Desired path for all log files to appear in."""),
     )
@@ -58,7 +58,7 @@ def overlay_path(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--overlay-path",
         dest="overlay_path",
-        required=True,
+        required=False,
         type=Path,
         help=inspect.cleandoc("""Path to directory to overlay on top of
         simulation disk image."""),
@@ -72,7 +72,7 @@ def sim_img(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--sim-img",
         dest="sim_img",
-        required=True,
+        required=False,
         type=Path,
         help=inspect.cleandoc("""Path to the simulation disk image."""),
     )
@@ -85,7 +85,7 @@ def sim_prog(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--sim-prog",
         dest="sim_prog",
-        required=True,
+        required=False,
         type=Path,
         help=inspect.cleandoc("""Path to the program to run at the top-level
         by Firesim.
@@ -147,7 +147,7 @@ def partition(parser: argparse.ArgumentParser) -> None:
         "-p",
         "--partition",
         dest="slurm_partitions",
-        required=True,
+        required=False,
         default="firesim",
         type=str,
         help=inspect.cleandoc("""The Slurm partition that this job should run on.
@@ -168,7 +168,7 @@ def nodelist(parser: argparse.ArgumentParser) -> None:
         "-w",
         "--nodelist",
         dest="slurm_nodelist",
-        required=True,
+        required=False,
         type=str,
         help=inspect.cleandoc("""The Cheese Cluster node in Slurm (*jack) that
         this simulation should be run on. Like Slurm, this is a comma-delimited

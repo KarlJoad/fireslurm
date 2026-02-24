@@ -7,6 +7,7 @@ from pathlib import Path
 import enum
 
 import fireslurm.args as args
+import fireslurm.config as config
 import fireslurm.batch
 import fireslurm.run
 import fireslurm.sync
@@ -187,6 +188,31 @@ def build_argparser() -> argparse.ArgumentParser:
     return parser
 
 
+def read_fireslurm_config(config_path: Path) -> config.FireSlurmConfig:
+    """
+    Read FireSlurm's configuration file from CONFIG_PATGH and return the
+    configuration.
+    """
+    import yaml
+
+    # Use the "!path" YAML tag to trigger a specialty constructor that we use
+    # to do type conversion from bare string to a pathlib.Path object.
+    def path_constructor(loader, node):
+        value = loader.construct_scalar(node)
+        return Path(value)
+
+    # Register the constructor
+    yaml.SafeLoader.add_constructor("!path", path_constructor)
+
+    with open(config_path.resolve(), "r") as cfg:
+        file_config = yaml.safe_load(cfg)
+
+    cfg = config.FireSlurmConfig(**file_config)
+    logger.debug(f"Found configuration options in config file: {cfg=!s}")
+
+    return cfg
+
+
 def main():
     parser = build_argparser()
     args = parser.parse_args()
@@ -195,6 +221,8 @@ def main():
         level=logging.DEBUG if args.verbosity > 0 else logging.INFO,
     )
     logger.debug(f"Running with {args=!s}")
+
+    _fireslurm_config = read_fireslurm_config(args.fireslurm_config_path)
 
     if vars(args).get("cmd", None) is not None:
         logger.debug(f"Consolidating {args.cmd=!s} to single string")

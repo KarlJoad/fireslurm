@@ -1,0 +1,7 @@
+overlay_path: !path "overlay"
+sim_config: !path "configs/latest"
+sim_img: !path "root.img"
+sim_prog: !path "kernel.bin"
+log_dir: !path "logs"
+partitions: [ "firesim", ]
+nodelist: [ "colbyjack", ]
