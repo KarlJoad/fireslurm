@@ -158,6 +158,18 @@ def build_argparser() -> argparse.ArgumentParser:
         add_help=True,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
+    parser.add_argument(
+        "-c",
+        "--config",
+        dest="fireslurm_config_path",
+        required=False,
+        type=Path,
+        default=Path("fireslurm.yaml"),
+        help=inspect.cleandoc("""Path to a FireSlurm configuration file.
+        If unspecified, FireSlurm looks for fireslurm.yaml in the directory
+        FireSlurm was invoked from (the PWD)."""),
+    )
+
     args.verbose(parser)
     args.dry_run(parser)
 
