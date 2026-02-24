@@ -4,6 +4,7 @@ import argparse
 import inspect
 import logging
 from pathlib import Path
+from dataclasses import replace, fields
 import enum
 
 import fireslurm.args as args
@@ -213,6 +214,20 @@ def read_fireslurm_config(config_path: Path) -> config.FireSlurmConfig:
     return cfg
 
 
+def config_with_cli_flags(
+    config: config.FireSlurmConfig,
+    cli_flags: argparse.Namespace,
+) -> config.FireSlurmConfig:
+    config_fields = {f.name for f in fields(config)}
+
+    config_cli_flags = {
+        k: v for k, v in vars(cli_flags).items() if k in config_fields and v is not None
+    }
+    new_cfg = replace(config, **config_cli_flags)
+    logger.debug(f"Configuration options after overlaying CLI flags: {new_cfg=!s}")
+    return new_cfg
+
+
 def main():
     parser = build_argparser()
     args = parser.parse_args()
@@ -222,12 +237,16 @@ def main():
     )
     logger.debug(f"Running with {args=!s}")
 
-    _fireslurm_config = read_fireslurm_config(args.fireslurm_config_path)
+    fireslurm_config = read_fireslurm_config(args.fireslurm_config_path)
 
     if vars(args).get("cmd", None) is not None:
         logger.debug(f"Consolidating {args.cmd=!s} to single string")
         args.cmd = " ; ".join(args.cmd)
         logger.debug(f"Consolidated {args.cmd=!r}")
+
+    # "Overlay" arguments provided on the CLI so they take precedence over the
+    # config file.
+    fireslurm_config = config_with_cli_flags(fireslurm_config, args)
 
     args.func(**vars(args))
 
