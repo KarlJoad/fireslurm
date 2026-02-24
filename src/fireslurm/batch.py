@@ -165,7 +165,7 @@ def submit_slurm_job(
     # Regex match on the STDOUT that sbatch produced to grab the job number.
     if not utils.dry_run:
         job_match = re.match(r"^Submitted batch job (\d+)$", proc.stdout)
-        job.id = job_match[1]
+        job = JobInfo(slurm_job_id=int(job_match[1]))
         logger.info(f"Job submitted! Job Info {job=!s}")
         logger.info(f"STDOUT output will be in {output_file=!s}")
 

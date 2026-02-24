@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 
-@dataclass
+@dataclass(frozen=True)
 class JobInfo:
     """
     Class containing information about a submitted Slurm job.
