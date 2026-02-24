@@ -13,6 +13,7 @@ from pathlib import Path
 import subprocess
 import re
 import textwrap
+import os
 
 import fireslurm.utils as utils
 from fireslurm.slurm import JobInfo
@@ -98,6 +99,7 @@ def build_sbatch_script(
                 cmd,
             )
         )
+    os.chmod(script, 0o775)
     return script
 
 
