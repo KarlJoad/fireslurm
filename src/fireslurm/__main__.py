@@ -4,6 +4,7 @@ import argparse
 import inspect
 import logging
 from pathlib import Path
+import enum
 
 import fireslurm.args as args
 import fireslurm.batch
@@ -14,9 +15,22 @@ import fireslurm.sync
 logger = logging.getLogger(__name__)
 
 
+# StrEnum comes from Python 3.11
+# class FireSlurmCommands(enum.StrEnum):
+class FireSlurmCommands(enum.Enum):
+    """
+    The set of subcommands that FireSlurm accepts.
+    """
+
+    SYNC = "sync"
+    DIRECT_RUN = "direct-run"
+    RUN = "run"
+    BATCH = "batch"
+
+
 def build_sync_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     sync_parser = subparser.add_parser(
-        "sync",
+        FireSlurmCommands.SYNC.value,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         help=inspect.cleandoc(
             """Synchronize your FireSlurm layout with a new FireSim environment"""
@@ -51,7 +65,7 @@ def build_sync_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentPa
 
 def build_direct_run_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     run_parser = subparser.add_parser(
-        "direct-run",
+        FireSlurmCommands.DIRECT_RUN.value,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         help=inspect.cleandoc("""Run a FireSim simulation directly. This
         bypasses Slurm entirely to run the simulation.
@@ -82,7 +96,7 @@ def build_direct_run_parser(subparser: argparse.ArgumentParser) -> argparse.Argu
 
 def build_run_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     srun_parser = subparser.add_parser(
-        "run",
+        FireSlurmCommands.RUN.value,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         help=inspect.cleandoc("""Run a FireSim simulation under Slurm with srun"""),
     )
@@ -111,7 +125,7 @@ def build_run_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentPar
 
 def build_batch_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     batch_parser = subparser.add_parser(
-        "batch",
+        FireSlurmCommands.BATCH.value,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         help=inspect.cleandoc("""Submit a FireSim simulation job to Slurm using sbatch"""),
     )
