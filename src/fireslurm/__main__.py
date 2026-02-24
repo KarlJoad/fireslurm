@@ -149,6 +149,7 @@ def build_argparser() -> argparse.ArgumentParser:
 
     subparsers = parser.add_subparsers(
         title="Commands",
+        required=True,
         help=inspect.cleandoc("""Available Commands"""),
     )
     _sync_parser = build_sync_parser(subparsers)
