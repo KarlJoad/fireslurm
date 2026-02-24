@@ -539,3 +539,9 @@ def run(
     # right. If we _really_ need to slice-and-dice this output and not the
     # logged uartlog output, then we can rewrite this to use subprocess.Popen.
     pty.spawn(whole_srun_cmd)
+
+    # Since we srun above and do not capture the stdout of the srun (because
+    # we are using pty.spawn), we never see Slurm's assigned job id. However,
+    # because run hijacks the terminal for displaying the run as it is
+    # happening, this is kind of a non-issue.
+    return JobInfo(-1)
