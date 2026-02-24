@@ -544,4 +544,4 @@ def run(
     # we are using pty.spawn), we never see Slurm's assigned job id. However,
     # because run hijacks the terminal for displaying the run as it is
     # happening, this is kind of a non-issue.
-    return JobInfo(-1)
+    return JobInfo()
