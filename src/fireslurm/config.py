@@ -73,6 +73,21 @@ class FireSlurmConfig:
     How verbosely to log, higher values produce more logs.
     """
 
+    def verbose(self) -> bool:
+        """
+        Return True if there is any verbosity enabled. False otherwise.
+        """
+        return self.verbosity > 0
+
+    def verbose_flag(self) -> str:
+        """
+        Return a verbose flag string with this configuration's specified
+        verbosity. If verbosity is 0, then the empty string is returned.
+
+        A verbose flag string looks like "-v".
+        """
+        return "-" + "v" * self.verbosity if self.verbosity > 0 else ""
+
     dry_run: bool = False
     """
     Should the run actually do anything or just print what would happen?

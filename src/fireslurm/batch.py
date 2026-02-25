@@ -37,7 +37,7 @@ def build_job_script_contents(
     # We can get away with setting the verbosity this way and then just
     # inserting the empty string into the shell command because sbatch runs a
     # shell command. This means the empty string is effectively thrown away.
-    verbose_flag = "-" + "v" * config.verbosity if config.verbosity > 0 else ""
+    verbose_flag = config.verbose_flag()
 
     return textwrap.dedent(f"""\
     #!/usr/bin/env bash
@@ -101,8 +101,8 @@ def submit_slurm_job(
     ]
     # fmt: on
     # Now put the extra flags on
-    if config.verbosity > 0:
-        sbatch_cmd += ["-" + "v" * config.verbosity]
+    if config.verbose():
+        sbatch_cmd.append(config.verbose_flag())
     if utils.dry_run:
         sbatch_cmd += ["--test-only"]
     # And lastly, the job script we just built.

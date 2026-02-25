@@ -457,7 +457,6 @@ def run(config: RunConfig) -> JobInfo:
     """
     Run the Slurm job in an interactive "srun" session.
     """
-    verbose_flag = "-" + "v" * config.verbosity if config.verbosity > 0 else ""
     job_run_py = fzipper.build_job_run_py(config.sim_config / "fireslurm.pyz")
 
     logger.info(f"Running this job as interactive?: {config.is_interactive()}")
@@ -467,9 +466,8 @@ def run(config: RunConfig) -> JobInfo:
         "python3",
         job_run_py.resolve(),
     ]
-    # TODO: Remove this conditional check!
-    if config.verbosity:
-        fireslurm_cmd.append(verbose_flag)
+    if config.verbose():
+        fireslurm_cmd.append(config.verbose_flag())
 
     fireslurm_cmd += [
         "direct-run",
