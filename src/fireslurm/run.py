@@ -457,8 +457,6 @@ def run(config: RunConfig) -> JobInfo:
     """
     Run the Slurm job in an interactive "srun" session.
     """
-    logger.debug("Building the sbatch submission script's contents!")
-
     verbose_flag = "-" + "v" * config.verbosity if config.verbosity > 0 else ""
     job_run_py = fzipper.build_job_run_py(config.sim_config / "fireslurm.pyz")
 
