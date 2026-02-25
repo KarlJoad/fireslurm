@@ -487,7 +487,7 @@ def run(config: RunConfig) -> JobInfo:
     # fmt: off
     srun_cmd = [
         "srun",
-        "--partition", ",".join(config.partitions),
+        "--partition", config.partitions_flag(),
         "--nodelist", ",".join(config.nodelist),
         "--job-name", job_name,
         # XXX: We make the srun run in a PTY and unbuffered so that we can

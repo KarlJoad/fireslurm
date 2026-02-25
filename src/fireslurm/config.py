@@ -62,6 +62,12 @@ class FireSlurmConfig:
     partitions: List[str]
     """The Slurm partitions FireSlurm should run on."""
 
+    def partitions_flag(self) -> str:
+        """
+        Format the partitions field for Slurm CLI use.
+        """
+        return ",".join(self.partitions)
+
     nodelist: List[str]
     """
     The set of nodes inside of the partition this Slurm job should be allowed

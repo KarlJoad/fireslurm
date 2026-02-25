@@ -92,7 +92,7 @@ def submit_slurm_job(
     # fmt: off
     sbatch_cmd = [
         "sbatch",
-        "--partition", ",".join(config.partitions),
+        "--partition", config.partitions_flag(),
         "--nodelist", ",".join(config.nodelist),
         "--job-name", f"{config.run_name!s}",
         "--output", f"{config.slurm_output.resolve()!s}",
