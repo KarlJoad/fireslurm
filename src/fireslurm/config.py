@@ -74,6 +74,12 @@ class FireSlurmConfig:
     to run on.
     """
 
+    def nodelist_flag(self) -> str:
+        """
+        Format the nodelist field for Slurm CLI use.
+        """
+        return ",".join(self.nodelist)
+
     verbosity: int = 0
     """
     How verbosely to log, higher values produce more logs.

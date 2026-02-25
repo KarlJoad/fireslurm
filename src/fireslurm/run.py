@@ -488,7 +488,7 @@ def run(config: RunConfig) -> JobInfo:
     srun_cmd = [
         "srun",
         "--partition", config.partitions_flag(),
-        "--nodelist", ",".join(config.nodelist),
+        "--nodelist", config.nodelist_flag(),
         "--job-name", job_name,
         # XXX: We make the srun run in a PTY and unbuffered so that we can
         # stream the simulator's output to the user live and correctly, making
