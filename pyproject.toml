@@ -3,7 +3,7 @@ name = "fireslurm"
 description = """Combine Firesim's SoC & FPGA-accelerated simulation with \
                  Slurm's job scheduling!"""
 readme = "README.md"
-requires-python = ">= 3.13"
+requires-python = ">= 3.10"
 license = { text = "CUSTOM" }
 dynamic = ["version"]
 dependencies = [
