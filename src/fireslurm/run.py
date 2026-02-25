@@ -19,7 +19,6 @@ import sys
 if sys.version_info[0] < 3:
     raise RuntimeError("This script requires Python version 3!")
 
-import argparse
 import logging
 import os
 from pathlib import Path
@@ -34,131 +33,11 @@ import pty
 
 from fireslurm.config import RunConfig
 import fireslurm.utils as utils
-import fireslurm.validation as validate
 from fireslurm.slurm import JobInfo
 import fireslurm.zipper as fzipper
 
 
 logger = logging.getLogger(__name__)
-
-
-def validate_sim_config(sim_config: Path) -> bool:
-    """
-    Return True if the SIM_CONFIG is a valid directory to use with fireslurm.
-    Return False otherwise.
-
-    A valid simulation configuration directory is one with the following
-    hierarchy:
-    stable
-    ├── description.txt
-    ├── FireSim-xilinx_vcu118
-    ├── *.so.*
-    └── xilinx_vcu118
-       ├── firesim.bit
-       ├── firesim.mcs
-       ├── firesim_secondary.mcs
-       └── metadata
-    """
-    return all(
-        [
-            validate.path_is_readable_dir(sim_config),
-            validate.path_is_readable_dir(sim_config / "xilinx_vcu118"),
-            validate.path_is_executable_file(sim_config / "FireSim-xilinx_vcu118"),
-            validate.path_is_readable_file(sim_config / "xilinx_vcu118" / "firesim.bit"),
-        ]
-    )
-
-
-def validate_overlay(overlay_path: Path) -> bool:
-    """
-    Return True if the OVERLAY_PATH is a valid overlay to use with Firesim.
-    """
-    return validate.path_is_readable_dir(overlay_path)
-
-
-def validate_sim_img(sim_img: Path) -> bool:
-    """
-    Return True if the SIM_IMG bare disk image is valid for Firesim & QEMU.
-    Return False otherwise.
-    """
-    return all(
-        [
-            validate.path_is_readable_file(sim_img),
-            # This ".img" check is somewhat brittle, but helps us catch what may
-            # potentially be silly errors.
-            sim_img.suffix == ".img",
-            # TODO: Validate that sim_img is a block-device image
-        ]
-    )
-
-
-def validate_sim_prog(sim_prog: Path) -> bool:
-    """
-    Return True if the SIM_PROG program for Firesim to run as the top-level
-    program is in a valid configuration to use.
-    """
-    return all(
-        [
-            validate.path_is_readable_file(sim_prog),
-            validate.path_is_executable_file(sim_prog),
-        ]
-    )
-
-
-def validate_log_dir(log_dir: Path) -> bool:
-    """
-    Return True if LOG_DIR is a valid logging directory for FireSlurm and
-    FireSim.
-    Return False otherwise.
-    """
-    return all(
-        [
-            validate.path_is_readable_dir(log_dir),
-            validate.path_is_writable_dir(log_dir),
-        ]
-    )
-
-
-def validate_run_name(run_name: str) -> bool:
-    """
-    Return True if RUN_NAME is a valid name for a run.
-    Return False otherwise.
-
-    In particular, this function ensures that runs hav enames that are valid for
-    POSIX file systems. Some special characters are disallowed, spaces are
-    discouraged, etc.
-    """
-    logger.debug(f"Validating that {run_name=!r} is a valid POSIX file name")
-    # Empty names and the bare path separator "/" are invalid run names.
-    if not run_name or os.pathsep in run_name:
-        return False
-    # NOTE: The use of regexps here to perform a "POSIX match" on the log name
-    # is not technically correct, nor robust. But it is good enough for our
-    # limited Fireslurm usage.
-    import re
-
-    if re.fullmatch(r"[a-zA-Z0-9.\-_]+", run_name):
-        return True
-    else:
-        return False
-
-
-def validate_args(args: argparse.Namespace) -> bool:
-    """
-    Validate that the comand line arguments, ARGS, are well-formed for the rest
-    so the rest of the program can just assume they are valid.
-    Return True if all the ARGS are valid.
-    """
-    return all(
-        [
-            validate_sim_config(args.sim_config),
-            validate_overlay(args.overlay_path),
-            validate_sim_img(args.sim_img),
-            validate_sim_prog(args.sim_prog),
-            validate_log_dir(args.log_dir),
-            validate_run_name(args.run_name),
-        ]
-    )
 
 
 def write_firesim_sh(
