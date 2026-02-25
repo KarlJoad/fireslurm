@@ -299,7 +299,7 @@ def main():
     # config file.
     fireslurm_config = config_with_cli_flags(fireslurm_config, args)
 
-    args.func(**vars(args))
+    args.func(fireslurm_config, args)
 
 
 if __name__ == "__main__":
