@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Union, NewType
 import uuid
 import sys
+from abc import ABC
 
 
 FireSlurmID = NewType("FireSlurmID", uuid.UUID)
@@ -137,10 +138,10 @@ class SyncConfig(FireSlurmConfig):
 
 
 @dataclass(frozen=True)
-class RunConfig(FireSlurmConfig):
+class SlurmJobConfig(ABC, FireSlurmConfig):
     """
-    FireSlurm configuration required to run a FireSim simulation through Slurm
-    with "srun".
+    An abstract base class (ABC) to make having multiple types of Slurm
+    interactions more DRY.
     """
 
     run_name: str = ""
@@ -170,6 +171,24 @@ class RunConfig(FireSlurmConfig):
     Clock cycle the FireSim simulation should start printing at.
     """
 
+    slurm_output: Path = Path("slurm-log/%j.out")
+    """
+    File path where Slurm's sbatch's STDOUT should go.
+    """
+
+    slurm_error: Path = Path("slurm-log/%j.err")
+    """
+    File path where Slurm's sbatch's STDERR should go.
+    """
+
+
+@dataclass(frozen=True)
+class RunConfig(SlurmJobConfig):
+    """
+    FireSlurm configuration required to run a FireSim simulation through Slurm
+    with "srun".
+    """
+
     @classmethod
     def from_batch_config(cls: "RunConfig", config: "BatchConfig") -> "RunConfig":
         """
@@ -184,31 +203,14 @@ class RunConfig(FireSlurmConfig):
 
 
 @dataclass(frozen=True)
-class BatchConfig(FireSlurmConfig):
+class BatchConfig(SlurmJobConfig):
     """
     FireSlurm configuration required to run a FireSim simulation through Slurm
     with "sbatch".
     """
 
-    run_name: str = ""
-    """
-    The name that this run should have in Slurm.
-    """
-
-    cmd: Union[str, List[any]] = ""
-    """
-    The command the batch job should execute INSIDE the FireSim simulation.
-    """
-
-    slurm_output: Path = Path("slurm-log/%j.out")
-    """
-    File path where Slurm's sbatch's STDOUT should go.
-    """
-
-    slurm_error: Path = Path("slurm-log/%j.err")
-    """
-    File path where Slurm's sbatch's STDERR should go.
-    """
+    def __post_init__(self):
+        assert not self.is_interactive(), "Batch runs must have a command"
 
     # Sometimes it is useful to turn a RunConfig into a BatchConfig, especially
     # if you are using FireSlurm as a library and driving it with your own
