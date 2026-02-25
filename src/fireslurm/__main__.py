@@ -4,7 +4,7 @@ import argparse
 import inspect
 import logging
 from pathlib import Path
-from dataclasses import replace, fields
+from dataclasses import replace, fields, asdict
 import enum
 
 import fireslurm.args as args
@@ -30,6 +30,18 @@ class FireSlurmCommands(enum.Enum):
     BATCH = "batch"
 
 
+def sync(fireslurm_config: config.FireSlurmConfig, args: argparse.Namespace) -> None:
+    sync_config = config.SyncConfig(
+        **asdict(fireslurm_config),
+        infrasetup_target=args.infrasetup_target,
+        config_name=args.config_name,
+        description=args.description,
+    )
+    logger.info(f"Synchronizing infrasetup target to FireSlurm {sync_config=!s}")
+    logger.debug(f"{sync_config=!s}")
+    return fireslurm.sync.sync(sync_config)
+
+
 def build_sync_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     sync_parser = subparser.add_parser(
         FireSlurmCommands.SYNC.value,
@@ -38,7 +50,7 @@ def build_sync_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentPa
             """Synchronize your FireSlurm layout with a new FireSim environment"""
         ),
     )
-    sync_parser.set_defaults(func=fireslurm.sync.sync)
+    sync_parser.set_defaults(func=sync)
     sync_parser.add_argument(
         "--config-name",
         dest="config_name",

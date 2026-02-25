@@ -18,6 +18,7 @@ from pathlib import Path
 from datetime import datetime
 
 import fireslurm.utils as utils
+from fireslurm.config import SyncConfig
 
 
 logger = logging.getLogger(__name__)
@@ -87,17 +88,15 @@ def unzip_firesim_libs(compressed_tarball: Path, decompress_target: Path) -> Non
     utils.run_cmd(tar_cmd)
 
 
-def sync(
-    sim_config: Path,
-    config_name: str,
-    infrasetup_target: Path,
-    description: str,
-    **kwargs,
-) -> None:
-    config_dir = build_config_dir(sim_config, config_name)
+def sync(config: SyncConfig) -> None:
+    """
+    Synchronize the "firesim infrasetup" target's output to another location
+    that FireSlurm can track and use to submit jobs to Slurm.
+    """
+    config_dir = build_config_dir(config.sim_config, config.config_name)
 
-    unzip_firesim_libs(infrasetup_target / "driver-bundle.tar.gz", config_dir)
-    unzip_firesim_libs(infrasetup_target / "firesim.tar.gz", config_dir)
+    unzip_firesim_libs(config.infrasetup_target / "driver-bundle.tar.gz", config_dir)
+    unzip_firesim_libs(config.infrasetup_target / "firesim.tar.gz", config_dir)
 
     with open(config_dir / "description.txt", "w") as desc_file:
-        desc_file.write(description)
+        desc_file.write(config.description)
