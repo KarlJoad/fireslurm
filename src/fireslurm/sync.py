@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """
 Synchronize a FireSim simulation directory for later FireSlurm use.
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """
 Batch up and submit multiple run.py jobs to Slurm.
 
