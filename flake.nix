@@ -25,14 +25,65 @@
       {
         # Overlay nixpkgs
         overlays.default = final: prev: {
-          python3 = prev.python3.override {
+          # Downgrade slurm to what we have on the cheese cluster
+          slurm = prev.slurm.overrideAttrs (prevAttrs: rec {
+            version = "21.08.8.2";
+            src = prev.fetchFromGitHub {
+              owner = "SchedMD";
+              repo = "slurm";
+              # Slurm's tags use - instead of .
+              tag = "slurm-${builtins.replaceStrings [ "." ] [ "-" ] version}";
+              hash = "sha256-3Q9h7XgnMTqn0F0C+CJ2r3rOxHbDhOjFjsM5mg6yL9k=";
+            };
+            configureFlags = prevAttrs.configureFlags ++ ([
+              "--without-rpath"
+              # Disable pmix for MPI. There are build issues with pmix and this
+              # version of Slurm. Since we only want the development headers out
+              # of Slurm's core anyways, this is not really a loss for us.
+              # This also avoids us from needing to deal with the pmix patch
+              # that used to be needed for this version of Slurm.
+              "--with-pmix=no"
+            ]);
+          });
+          # So we can build an older version of pyslurm
+          python312 = prev.python312.override {
             packageOverrides = python-final: python-prev: {
-              rassumfrassum = final.python3Packages.buildPythonPackage rec {
+              pyslurm = python-prev.pyslurm.overridePythonAttrs (prevAttrs: rec {
+                version = "21.8.0";
+                src = prev.fetchFromGitHub {
+                  owner = "PySlurm";
+                  repo = "pyslurm";
+                  tag = "v${version}";
+                  hash = "sha256-9ZYTBO8g+5B9D8Ll5JjkJYFyh0RQNIjxg958UZoCNmA=";
+                };
+                # According to the docs, buildPythonPackage falls back to using
+                # setup.py when pyproject = true and no pyproject.toml exists.
+                # However, this actually uses Nixpkgs' pypa build tooling, which
+                # is slightly incompatible with the way flags get passed to
+                # setup.py.
+                # Overriding pyproject to null and setting the format to
+                # "setuptools" yields Nixpkgs' old setuptools-build-hook.
+                pyproject = null;
+                format = "setuptools";
+                build-system = [ python-prev.setuptools ];
+                buildInputs = [
+                  final.slurm
+                  python-prev.cython_0
+                ];
+                setupPyBuildFlags = [
+                  # NOTE: The slurm package here points to our older version's
+                  # checkout in this overlay.
+                  "--slurm-lib=${final.slurm}/lib"
+                  "--slurm-inc=${final.slurm.dev}/include"
+                ];
+              });
+
+              rassumfrassum = python-prev.buildPythonPackage rec {
                 pname = "rassumfrassum";
                 version = "0.3.3";
                 pyproject = true;
 
-                # disabled = final.python3Packages.pythonOlder "3.10";
+                disabled = final.python3Packages.pythonOlder "3.10";
 
                 src = final.pkgs.fetchFromGitHub {
                   owner = "joaotavora";
@@ -41,7 +92,7 @@
                   hash = "sha256-3Hcews5f7o45GUmFdpLwkAHf0bthC1tUikkxau952Ec=";
                 };
 
-                build-system = [ final.python3Packages.setuptools ];
+                build-system = [ python-prev.setuptools ];
 
                 meta = {
                   homepage = "";
@@ -68,7 +119,7 @@
         # What we really want
         devShells = forAllSystems (system:
           let pkgs = nixpkgsFor.${system};
-              pythonEnv = pkgs.python3.withPackages (ps: with ps; [
+              pythonEnv = pkgs.python312.withPackages (ps: with ps; [
                 ruff
                 uv
                 rassumfrassum
@@ -79,6 +130,8 @@
                 wheel
                 build
                 setuptools
+                # Work with Slurm from Python
+                pyslurm
               ]);
 
           in {
