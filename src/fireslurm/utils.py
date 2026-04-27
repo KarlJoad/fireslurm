@@ -8,7 +8,9 @@ import subprocess
 from contextlib import contextmanager
 import signal
 import tempfile
+
 # import stty  # Comes from 3rd party
+import textwrap
 
 
 logger = logging.getLogger(__name__)
@@ -87,7 +89,35 @@ def run_cmd(cmd) -> Union[subprocess.CompletedProcess, None]:
 
 
 @contextmanager
-def mount_img(img: Path) -> Path:
+def mount_img(img: Path, work_queue: List[str]) -> str:
+    """
+    Attempt to mount IMG to a temporary mountpoint. If this is successful, then
+    the dynamic context (the contents of the with-block) are run with IMG
+    mounted to the yielded path.
+
+    If the mount or the contents of the block throw an exception, then the image
+    is sync-ed and unmounted, and the temporary mountpoint removed before
+    exiting.
+    """
+    IMG_MOUNT_ENV_VAR = "MOUNT_IMG_TMP_DIR"
+    work_queue.append(
+        textwrap.dedent(f"""\
+    {IMG_MOUNT_ENV_VAR!s}="$(mktemp --directory)"
+    sudo mount -o loop {img.resolve()!s} "${IMG_MOUNT_ENV_VAR!s}"
+    """)
+    )
+    yield IMG_MOUNT_ENV_VAR
+    work_queue.append(
+        textwrap.dedent(f"""\
+    sudo umount "${IMG_MOUNT_ENV_VAR}"
+    sync
+    rmdir "${IMG_MOUNT_ENV_VAR!s}"
+    """)
+    )
+
+
+@contextmanager
+def mount_disk_img(img: Path) -> Path:
     """
     Attempt to mount IMG to a temporary mountpoint. If this is successful, then
     the dynamic context (the contents of the with-block) are run with IMG
@@ -116,15 +146,64 @@ def block_sigint():
 
 
 @contextmanager
-def change_sigint_key(is_tty: bool):
-    if is_tty:
-        # tty = stty.Stty(fd=0)
-        logger.warning("Changing SIGINT key to C-]!")
-        os.system("stty intr ^]")
-        yield
-        # tty.intr = "^c"
-        os.system("stty intr ^c")
-        logger.warning("SIGINT key changed back to to C-c!")
-    else:
-        logger.warning("Not currently connected to TTY! Cannot change SIGINT key")
-        yield
+def change_sigint_key(work_queue: List[str]):
+    work_queue.append(
+        textwrap.dedent(f"""\
+    if test -t {sys.stdin.fileno()!s}; then
+        echo "Changing SIGINT key to C-]!"
+        stty intr ^]
+    else
+        echo "Not currently connected to TTY! Cannot change SIGINT key"
+    fi
+    """)
+    )
+    yield
+    work_queue.append(
+        textwrap.dedent(f"""\
+    if test -t {sys.stdin.fileno()!s}; then
+        stty intr ^c
+        echo "SIGINT key changed back to to C-c!"
+    else
+        echo "Not currently connected to TTY! Cannot change SIGINT key"
+    fi
+    """)
+    )
+
+
+@contextmanager
+def change_path(
+    env_var: str, vals: List[Union[str, Path]], work_queue: List[str], sep: str = os.pathsep
+):
+    """
+    Extend the environment variable ENV_VAR with VALS.
+    You may specify the path separator in SEP. By default, SEP will use the
+    OS-specific path separator character.
+
+    Returns the a tuple with the (old, new) states of the environment variable.
+    """
+
+    def val_to_str(v: Union[str, Path]) -> str:
+        if isinstance(v, str):
+            return v
+        elif isinstance(v, Path):
+            return str(v.resolve())
+
+    logger.debug(f"Extending {env_var} with {vals}")
+    old_env_var = "OLD_" + env_var
+    old_val = os.environ.get(env_var, "")
+    vals_to_add = map(val_to_str, vals)
+    final_path = sep.join(vals_to_add) + sep + old_val
+    work_queue.append(
+        textwrap.dedent(f"""\
+    export {old_env_var}="${env_var}"
+    export {env_var}="{final_path}"
+    echo "New state of \${env_var}: \"${env_var}\""
+    """)
+    )
+    yield
+    work_queue.append(
+        textwrap.dedent(f"""\
+    export {env_var}="${old_env_var}"
+    unset {old_env_var}
+    """)
+    )

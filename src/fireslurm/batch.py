@@ -16,7 +16,7 @@ import os
 from fireslurm.config import BatchConfig
 import fireslurm.utils as utils
 from fireslurm.slurm import JobInfo
-import fireslurm.zipper as fzipper
+import fireslurm.run
 
 
 logger = logging.getLogger(__name__)
@@ -53,27 +53,6 @@ def build_job_script_contents(
             --log-dir {config.log_dir.resolve()!s} \\
             -- '{config.cmd!s}'
     """)
-
-
-def build_sbatch_script(
-    config: BatchConfig,
-    results_dir: Path,
-) -> Path:
-    """
-    Return the path to the generated script that will be given to sbatch.
-    """
-    results_dir.mkdir(parents=True, exist_ok=True)
-
-    script = (config.sim_config / f"run-{config.run_name}.sh").resolve()
-    job_run_py = fzipper.build_job_run_py(config.sim_config / "fireslurm.pyz")
-    assert job_run_py and job_run_py.exists(), (
-        f"FireSlurm's runner must be in {config.sim_config.resolve()}"
-    )
-    logger.info(f"Writing the sbatch submission to {script=!s}")
-    with open(script, "w") as s:
-        s.write(build_job_script_contents(config, job_run_py))
-    os.chmod(script, 0o775)
-    return script
 
 
 def submit_slurm_job(
@@ -148,10 +127,12 @@ def submit_slurm_job(
 def batch(config: BatchConfig) -> JobInfo:
     config.log_dir.mkdir(parents=True, exist_ok=True)
 
-    job_file = build_sbatch_script(
-        config,
-        Path("results"),  # Placeholder
-    )
+    batch_tasks = fireslurm.run.build_run_tasks(config)
+
+    job_file = config.sim_config / f"fireslurm-run-{config.run_name!s}.sh"
+    with open(job_file, "w") as s:
+        s.write("\n".join(batch_tasks))
+        os.chmod(job_file, 0o775)
 
     # XXX: Slurm will not create directories to the STDOUT/STDERR paths that we
     # specify with the --output/--error flags to sbatch. So we must do it
@@ -159,6 +140,8 @@ def batch(config: BatchConfig) -> JobInfo:
     config.slurm_output.mkdir(parents=True, exist_ok=True)
     config.slurm_error.mkdir(parents=True, exist_ok=True)
 
+    # FIXME: When jobs are submitted with sbatch, the terminal's output is also
+    # going to the slurm --output file.
     job = submit_slurm_job(
         config,
         job_file,
