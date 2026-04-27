@@ -123,6 +123,7 @@
                 ruff
                 uv
                 rassumfrassum
+                pytest
                 # pyproject.toml stuff
                 installer
                 packaging

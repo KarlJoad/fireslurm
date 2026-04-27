@@ -30,6 +30,12 @@ requires = [
     "pyyaml >= 6.0.3",
 ]
 
+[tool.pytest]
+minversion = "8.4.2"
+testpaths = [
+    "tests",
+]
+
 [tool.ruff]
 line-length = 100
 include = ["*.py"]
