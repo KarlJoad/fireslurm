@@ -1,3 +1,8 @@
+"""
+Definition of and produces a single object that represents the user's requested
+configuration options.
+"""
+
 from dataclasses import dataclass, asdict, field
 from pathlib import Path
 from typing import List, Union, NewType
