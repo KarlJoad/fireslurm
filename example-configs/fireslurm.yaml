@@ -1,3 +1,4 @@
+# !path is a hint to Python that the following string is a path.
 overlay_path: !path "overlay"
 sim_config: !path "configs/latest"
 sim_img: !path "root.img"
