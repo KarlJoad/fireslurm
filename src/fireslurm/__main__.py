@@ -210,8 +210,10 @@ def read_fireslurm_config(config_path: Path) -> config.FireSlurmConfig:
     # Register the constructor
     yaml.SafeLoader.add_constructor("!path", path_constructor)
 
+    logger.info(f"Reading Fireslurm configuration from {config_path.resolve()}")
     with open(config_path.resolve(), "r") as cfg:
         file_config = yaml.safe_load(cfg)
+        logger.debug(f"Read Fireslurm config: {file_config}")
 
     cfg = config.FireSlurmConfig(**file_config)
     logger.debug(f"Found configuration options in config file: {cfg=!s}")
