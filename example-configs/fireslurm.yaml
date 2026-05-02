@@ -1,3 +1,6 @@
+# For path items that are not absolute paths, this is resolved relative to the
+# directory where Fireslurm was invoked from.
+
 # !path is a hint to Python that the following string is a path.
 overlay_path: !path "overlay"
 sim_config: !path "configs/latest"
