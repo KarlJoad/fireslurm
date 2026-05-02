@@ -133,16 +133,14 @@ class FireSlurmConfig:
         """
         Validate that the FireSlurm configuration that was constructed is valid.
         """
-        assert self.validate_sim_config(), "Simulator config directory invalid"
-        assert self.validate_overlay(), "Overlay directory invalid"
-
-        assert self.validate_sim_img(), "Simulation disk image invalid"
-        assert self.validate_sim_prog(), "Simulation program (kernel) invalid"
+        # We only validate the log directory, since that is the only thing that
+        # must be valid for ALL kinds of jobs.
         assert self.validate_log_dir(), "Log directory is invalid"
 
-    def validate_sim_config(self) -> bool:
+    def validate_sim_config_source(self) -> bool:
         """
-        Return True if the SIM_CONFIG is a valid directory to use with fireslurm.
+        Return True if the SIM_CONFIG is a valid directory to use as a source
+        for Fireslurm simulations (run & batch).
         Return False otherwise.
 
         A valid simulation configuration directory is one with the following
@@ -303,6 +301,10 @@ class SlurmJobConfig(ABC, FireSlurmConfig):
 
     def __post_init__(self):
         assert self.validate_run_name(), "Run name is invalid"
+        assert self.validate_sim_config_source(), "Simulator config directory invalid"
+        assert self.validate_overlay(), "Overlay directory invalid"
+        assert self.validate_sim_img(), "Simulation disk image invalid"
+        assert self.validate_sim_prog(), "Simulation program (kernel) invalid"
 
 
 @dataclass(frozen=True)
@@ -311,6 +313,12 @@ class RunConfig(SlurmJobConfig):
     FireSlurm configuration required to run a FireSim simulation through Slurm
     with "srun".
     """
+
+    def __post_init__(self):
+        assert self.validate_sim_config_source(), "Simulator config directory invalid"
+        assert self.validate_overlay(), "Overlay directory invalid"
+        assert self.validate_sim_img(), "Simulation disk image invalid"
+        assert self.validate_sim_prog(), "Simulation program (kernel) invalid"
 
     @classmethod
     def from_batch_config(cls: "RunConfig", config: "BatchConfig") -> "RunConfig":
@@ -334,6 +342,10 @@ class BatchConfig(SlurmJobConfig):
 
     def __post_init__(self):
         assert not self.is_interactive(), "Batch runs must have a command"
+        assert self.validate_sim_config_source(), "Simulator config directory invalid"
+        assert self.validate_overlay(), "Overlay directory invalid"
+        assert self.validate_sim_img(), "Simulation disk image invalid"
+        assert self.validate_sim_prog(), "Simulation program (kernel) invalid"
 
     # Sometimes it is useful to turn a RunConfig into a BatchConfig, especially
     # if you are using FireSlurm as a library and driving it with your own
