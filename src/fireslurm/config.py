@@ -231,6 +231,19 @@ class SyncConfig(FireSlurmConfig):
     configuration was built/configured as.
     """
 
+    def validate_sim_config_target(self) -> bool:
+        """
+        Return True if the SIM_CONFIG is a valid directory to use as a target
+        for fireslurm sync commands.
+        Return False otherwise.
+        """
+        # Anything is a valid sim_config target, since Fireslurm will create
+        # the sim_config directory (and its parents) for us.
+        return True
+
+    def __post_init__(self):
+        assert self.validate_sim_config_target(), "Simulator config directory invalid"
+
 
 @dataclass(frozen=True)
 class SlurmJobConfig(ABC, FireSlurmConfig):
