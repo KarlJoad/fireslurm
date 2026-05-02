@@ -2,10 +2,27 @@
 # directory where Fireslurm was invoked from.
 
 # !path is a hint to Python that the following string is a path.
+
+# Where is directory whose contents should be overlaid on the disk image.
 overlay_path: !path "overlay"
+
+# Which configuration to use
 sim_config: !path "configs/latest"
+
+# Path to the disk image the simulation should use.
 sim_img: !path "root.img"
+
+# Path to the chain-loaded OpenSBI & Linux bare-metal binaries that should be
+# used to boot the simulated system and run it.
 sim_prog: !path "kernel.bin"
+
+# Path to the directory where Fireslurm should place its log files
+# Log files includes FireSim uartlog, cycle counter, tracefiles, etc. from each
+# run.
 log_dir: !path "logs"
+
+# Slurm partitions to run these Fireslurm jobs on
 partitions: [ "firesim", ]
+
+# Slurm nodes inside of the specified partition to run Fireslurm jobs on
 nodelist: [ "colbyjack", ]
