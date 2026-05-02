@@ -49,3 +49,7 @@ avoid-escape = true
 docstring-quotes = "double"
 inline-quotes = "double"
 multiline-quotes = "double"
+
+[tool.ty.src]
+include = ["src", "tests",]
+exclude = ["old/*"]
