@@ -46,7 +46,7 @@ def build_config_dir(config_dir: Path, config_name: str) -> Path:
         logger.info(f"{e} {latest_config}. Not removing.")
 
     # Register the now-current run as the latest log
-    os.symlink(src=current_config_dir, dst=latest_config)
+    os.symlink(src=current_config_dir.resolve(), dst=latest_config.resolve())
     logger.info(f"Marked {current_config_dir} as latest in {config_dir}")
     return latest_config
 

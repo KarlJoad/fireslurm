@@ -43,7 +43,7 @@ def write_firesim_sh(
     Returns the path to the "firesim.sh" script.
     """
     logger.debug("Building firesim.sh")
-    FIRESIM_SH = dest_dir / "firesim.sh"
+    FIRESIM_SH = (dest_dir / "firesim.sh").resolve()
     perms = stat.S_IFREG | stat.S_IRWXU | stat.S_IRWXG | stat.S_IROTH
 
     logger.debug(f"Command to run as seen by firesim.sh: {cmd=!r}")
