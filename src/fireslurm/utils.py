@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Tuple, Union
 from pathlib import Path
 import os
 import logging
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 # Perhaps pull in colorama or supports-color?
-def supports_color() -> True:
+def supports_color() -> bool:
     """
     Return True if the terminal supports color.
     """
@@ -28,7 +28,7 @@ def supports_color() -> True:
             colors = curses.tigetnum("colors")
             return colors >= 8  # Check for at least 8 colors (basic ANSI)
         except curses.error:
-            pass
+            return False
     return False
 
 
@@ -43,9 +43,16 @@ def wants_color() -> bool:
         return False
     if os.getenv("FORCE_COLOR", None) is not None:
         return True
+    # If we could not figure out that the user wants color, then we just assume
+    # that they do not want color.
+    return False
 
 
-def extend_path(env_var: str, vals: List[Union[str, Path]], sep: str = os.pathsep) -> str:
+def extend_path(
+    env_var: str,
+    vals: List[Union[str, Path]],
+    sep: str = os.pathsep,
+) -> Tuple[str, str]:
     """
     Extend the environment variable ENV_VAR with VALS.
     You may specify the path separator in SEP. By default, SEP will use the

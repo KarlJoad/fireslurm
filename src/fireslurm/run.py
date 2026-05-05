@@ -26,7 +26,7 @@ import textwrap
 from datetime import datetime
 import pty
 
-from fireslurm.config import RunConfig
+from fireslurm.config import RunConfig, SlurmJobConfig
 import fireslurm.utils as utils
 from fireslurm.slurm import JobInfo
 
@@ -153,7 +153,7 @@ def overlay_disk_image(overlay_path: Path, sim_img: Path) -> List[str]:
     return overlay_queue
 
 
-def infrasetup(config: RunConfig) -> List[str]:
+def infrasetup(config: SlurmJobConfig) -> List[str]:
     """
     Perform the same steps as "firesim infrasetup".
 
@@ -187,7 +187,7 @@ def infrasetup(config: RunConfig) -> List[str]:
 
 
 def build_firesim_cmd(
-    config: RunConfig,
+    config: SlurmJobConfig,
     sim_log_dir: Path,
 ) -> List[str]:
     """
@@ -234,7 +234,7 @@ def build_firesim_cmd(
 
 
 def run_simulation(
-    config: RunConfig,
+    config: SlurmJobConfig,
     sim_log_dir: Path,
 ) -> List[str]:
     """
@@ -267,7 +267,7 @@ def run_simulation(
     return run_queue
 
 
-def build_run_tasks(config: RunConfig) -> List[str]:
+def build_run_tasks(config: SlurmJobConfig) -> List[str]:
     logger.debug(f"Command to run INSIDE Firesim: {config.cmd=!s}")
 
     # If the user did not provide a command to us, then we assume that this
@@ -294,6 +294,7 @@ def build_run_tasks(config: RunConfig) -> List[str]:
             old_firesim_sh = mountpoint / "firesim.sh"
             os.unlink(old_firesim_sh, missing_ok=True)
     else:
+        assert config.cmd is not None, "Scripted runs require a command to run"
         logger.info(
             "You provided a command to use in firesim.sh. Building firesim.sh for automatic execution."
         )
@@ -338,7 +339,7 @@ def run(config: RunConfig) -> JobInfo:
         "--pty",
         "--unbuffered",
         "--exclusive",
-        fireslurm_run.resolve(),
+        f"{fireslurm_run.resolve()}",
     ]
     # fmt: on
     logger.debug(f"{srun_cmd=!s}")

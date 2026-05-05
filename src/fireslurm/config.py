@@ -5,12 +5,14 @@ configuration options.
 
 from dataclasses import dataclass, asdict, field
 from pathlib import Path
-from typing import List, Union, NewType
+from typing import List, NewType
+from collections.abc import Sequence
 import uuid
 import sys
 from abc import ABC
 import logging
 import os
+from os import PathLike
 
 import fireslurm.validation as validate
 
@@ -213,7 +215,7 @@ class FireSlurmConfig:
 
 @dataclass(frozen=True)
 class SyncConfig(FireSlurmConfig):
-    infrasetup_target: Path = None
+    infrasetup_target: Path = Path(".")
     """
     The directory that "firesim infrasetup" targeted.
     """
@@ -257,7 +259,7 @@ class SlurmJobConfig(ABC, FireSlurmConfig):
     The name that this run should have in Slurm.
     """
 
-    cmd: Union[str, List[any], None] = None
+    cmd: Sequence[str | bytes | PathLike[str] | PathLike[bytes]] | bytes | PathLike[str] | PathLike[bytes] | None = None
     """
     The command the batch job should execute INSIDE the FireSim simulation.
 

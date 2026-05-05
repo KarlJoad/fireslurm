@@ -67,7 +67,7 @@ def batch(fireslurm_config: config.FireSlurmConfig, args: argparse.Namespace) ->
     fireslurm.batch.batch(batch_config)
 
 
-def build_sync_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+def build_sync_parser(subparser) -> argparse.ArgumentParser:
     sync_parser = subparser.add_parser(
         FireSlurmCommands.SYNC.value,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -102,7 +102,7 @@ def build_sync_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentPa
     return sync_parser
 
 
-def build_run_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+def build_run_parser(subparser) -> argparse.ArgumentParser:
     run_parser = subparser.add_parser(
         FireSlurmCommands.RUN.value,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -131,7 +131,7 @@ def build_run_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentPar
     return run_parser
 
 
-def build_batch_parser(subparser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+def build_batch_parser(subparser) -> argparse.ArgumentParser:
     batch_parser = subparser.add_parser(
         FireSlurmCommands.BATCH.value,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
