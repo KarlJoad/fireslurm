@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import Iterator, List, Tuple, Union
 from pathlib import Path
 import os
 import logging
@@ -96,7 +96,7 @@ def run_cmd(cmd) -> Union[subprocess.CompletedProcess, None]:
 
 
 @contextmanager
-def mount_img(img: Path, work_queue: List[str]) -> str:
+def mount_img(img: Path, work_queue: List[str]) -> Iterator[str]:
     """
     Attempt to mount IMG to a temporary mountpoint. If this is successful, then
     the dynamic context (the contents of the with-block) are run with IMG
@@ -124,7 +124,7 @@ def mount_img(img: Path, work_queue: List[str]) -> str:
 
 
 @contextmanager
-def mount_disk_img(img: Path) -> Path:
+def mount_disk_img(img: Path) -> Iterator[Path]:
     """
     Attempt to mount IMG to a temporary mountpoint. If this is successful, then
     the dynamic context (the contents of the with-block) are run with IMG
