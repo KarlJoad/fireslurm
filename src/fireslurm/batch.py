@@ -113,6 +113,15 @@ def submit_slurm_job(
     # Regex match on the STDOUT that sbatch produced to grab the job number.
     if not utils.dry_run:
         job_match = re.match(r"^Submitted batch job (\d+)$", proc.stdout)
+
+        # If the submission did not happen, then we return the default JobInfo,
+        # log the issue, and just continue on for now.
+        if job_match is None:
+            logger.error(f"Could not submit job for some reason! {proc.stderr}")
+            # FIXME: We should probably do something realistic if the batch job
+            # is not submitted to Slurm for some reason.
+            return JobInfo()
+
         job = JobInfo(
             slurm_job_id=int(job_match[1]),
             run_id=config._run_id,
