@@ -57,7 +57,7 @@ def write_firesim_sh(
     {cmd}
     firesim-end-trigger
 
-    poweroff
+    poweroff -f
     """)
     logger.debug(f"Writing Firesim init script to {FIRESIM_SH}")
     with open(FIRESIM_SH, "w") as f:
