@@ -84,10 +84,7 @@ def update_log_files(log_dir: Path, log_name: str) -> Path:
     # Remove the previous "latest" run, because we are about to do a new run
     # If latest did not exist before, then we don't need to do anything.
     latest_log = log_dir / "latest"
-    try:
-        os.remove(latest_log)
-    except FileNotFoundError as e:
-        logger.info(f"{e} {latest_log}. Not removing.")
+    latest_log.unlink(missing_ok=True)
 
     # Register the now-current run as the latest log
     os.symlink(src=current_run_log.resolve(), dst=latest_log.resolve())
