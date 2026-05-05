@@ -289,7 +289,11 @@ def build_run_tasks(config: SlurmJobConfig) -> List[str]:
         )
         with utils.mount_disk_img(config.sim_img.resolve()) as mountpoint:
             old_firesim_sh = mountpoint / "firesim.sh"
-            os.unlink(old_firesim_sh, missing_ok=True)
+            old_firesim_sh.unlink(missing_ok=True)
+            if old_firesim_sh.exists():
+                logger.warning(
+                    f"FireSlurm's generated Bash script could not remove {old_firesim_sh}! Beware!"
+                )
     else:
         assert config.cmd is not None, "Scripted runs require a command to run"
         logger.info(
