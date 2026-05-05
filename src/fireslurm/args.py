@@ -17,10 +17,12 @@ def sim_config(parser: argparse.ArgumentParser) -> None:
         dest="sim_config",
         required=False,
         type=Path,
-        help=inspect.cleandoc("""Path to the simulation's configuration
+        help=inspect.cleandoc(
+            """Path to the simulation's configuration
         directory. This will/should include both the FireSim host-side program,
         the FPGA bitstream, and all relevant libraries needed.
-        This is the target directory for synchronizing."""),
+        This is the target directory for synchronizing."""
+        ),
     )
 
 
@@ -33,8 +35,10 @@ def run_name(parser: argparse.ArgumentParser) -> None:
         dest="run_name",
         required=True,
         type=str,
-        help=inspect.cleandoc("""Name to give to this run.
-        This log file will be created beneath the provided log_dir."""),
+        help=inspect.cleandoc(
+            """Name to give to this run.
+        This log file will be created beneath the provided log_dir."""
+        ),
     )
 
 
@@ -60,8 +64,10 @@ def overlay_path(parser: argparse.ArgumentParser) -> None:
         dest="overlay_path",
         required=False,
         type=Path,
-        help=inspect.cleandoc("""Path to directory to overlay on top of
-        simulation disk image."""),
+        help=inspect.cleandoc(
+            """Path to directory to overlay on top of
+        simulation disk image."""
+        ),
     )
 
 
@@ -87,9 +93,11 @@ def sim_prog(parser: argparse.ArgumentParser) -> None:
         dest="sim_prog",
         required=False,
         type=Path,
-        help=inspect.cleandoc("""Path to the program to run at the top-level
+        help=inspect.cleandoc(
+            """Path to the program to run at the top-level
         by Firesim.
-        This should be the combined OpenSBI firmware and Linux kernel program."""),
+        This should be the combined OpenSBI firmware and Linux kernel program."""
+        ),
     )
 
 
@@ -100,8 +108,10 @@ def cmd(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "cmd",
         nargs="*",
-        help=inspect.cleandoc("""Commands & Flags (in shell syntax) to run
-        inside Firesim."""),
+        help=inspect.cleandoc(
+            """Commands & Flags (in shell syntax) to run
+        inside Firesim."""
+        ),
     )
 
 
@@ -115,10 +125,12 @@ def verbose(parser: argparse.ArgumentParser) -> None:
         dest="verbosity",
         action="count",
         default=0,
-        help=inspect.cleandoc("""How verbosely to log. This flag can be included
+        help=inspect.cleandoc(
+            """How verbosely to log. This flag can be included
         multiple times to increase the verbosity.
         This will also be passed to Slurm commands to increase the amount they
-        log too."""),
+        log too."""
+        ),
     )
 
 
@@ -132,9 +144,11 @@ def dry_run(parser: argparse.ArgumentParser) -> None:
         dest="dry_run",
         action="store_true",
         default=False,
-        help=inspect.cleandoc("""
+        help=inspect.cleandoc(
+            """
         Should all subcommands this program invokes be "dry-run"?
-        If set, the sub-commands will do nothing, but will be logged."""),
+        If set, the sub-commands will do nothing, but will be logged."""
+        ),
     )
 
 
@@ -150,12 +164,14 @@ def partition(parser: argparse.ArgumentParser) -> None:
         required=False,
         default="firesim",
         type=str,
-        help=inspect.cleandoc("""The Slurm partition that this job should run on.
+        help=inspect.cleandoc(
+            """The Slurm partition that this job should run on.
         Like Slurm, this can accept a comma-delimited list of partitions to run
         on. The first partition that is available will run the job.
 
         NOTE: This is passed through to Slurm DIRECTLY! FireSlurm does NOTHING
-        with this flag!"""),
+        with this flag!"""
+        ),
     )
 
 
@@ -170,10 +186,12 @@ def nodelist(parser: argparse.ArgumentParser) -> None:
         dest="slurm_nodelist",
         required=False,
         type=str,
-        help=inspect.cleandoc("""The Cheese Cluster node in Slurm (*jack) that
+        help=inspect.cleandoc(
+            """The Cheese Cluster node in Slurm (*jack) that
         this simulation should be run on. Like Slurm, this is a comma-delimited
         list/range of hosts that are allowed to/should run this job.
 
         NOTE: This is passed through to Slurm DIRECTLY! FireSlurm does NOTHING
-        with this flag!"""),
+        with this flag!"""
+        ),
     )

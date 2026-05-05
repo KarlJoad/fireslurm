@@ -174,9 +174,7 @@ class FireSlurmConfig:
             [
                 validate.path_is_readable_dir(self.config_dir.resolve()),
                 validate.path_is_readable_dir(self.sim_config_path() / "xilinx_vcu118"),
-                validate.path_is_executable_file(
-                    self.sim_config_path() / "FireSim-xilinx_vcu118"
-                ),
+                validate.path_is_executable_file(self.sim_config_path() / "FireSim-xilinx_vcu118"),
                 validate.path_is_readable_file(
                     self.sim_config_path() / "xilinx_vcu118" / "firesim.bit"
                 ),
@@ -276,7 +274,13 @@ class SlurmJobConfig(ABC, FireSlurmConfig):
     The name that this run should have in Slurm.
     """
 
-    cmd: Sequence[str | bytes | PathLike[str] | PathLike[bytes]] | bytes | PathLike[str] | PathLike[bytes] | None = None
+    cmd: (
+        Sequence[str | bytes | PathLike[str] | PathLike[bytes]]
+        | bytes
+        | PathLike[str]
+        | PathLike[bytes]
+        | None
+    ) = None
     """
     The command the batch job should execute INSIDE the FireSim simulation.
 

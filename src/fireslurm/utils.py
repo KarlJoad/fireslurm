@@ -108,18 +108,22 @@ def mount_img(img: Path, work_queue: List[str]) -> Iterator[str]:
     """
     IMG_MOUNT_ENV_VAR = "MOUNT_IMG_TMP_DIR"
     work_queue.append(
-        textwrap.dedent(f"""\
+        textwrap.dedent(
+            f"""\
     {IMG_MOUNT_ENV_VAR!s}="$(mktemp --directory)"
     sudo mount -o loop {img.resolve()!s} "${IMG_MOUNT_ENV_VAR!s}"
-    """)
+    """
+        )
     )
     yield IMG_MOUNT_ENV_VAR
     work_queue.append(
-        textwrap.dedent(f"""\
+        textwrap.dedent(
+            f"""\
     sudo umount "${IMG_MOUNT_ENV_VAR}"
     sync
     rmdir "${IMG_MOUNT_ENV_VAR!s}"
-    """)
+    """
+        )
     )
 
 
@@ -155,31 +159,38 @@ def block_sigint():
 @contextmanager
 def change_sigint_key(work_queue: List[str]):
     work_queue.append(
-        textwrap.dedent(f"""\
+        textwrap.dedent(
+            f"""\
     if test -t {sys.stdin.fileno()!s}; then
         echo "Changing SIGINT key to C-]!"
         stty intr ^]
     else
         echo "Not currently connected to TTY! Cannot change SIGINT key"
     fi
-    """)
+    """
+        )
     )
     yield
     work_queue.append(
-        textwrap.dedent(f"""\
+        textwrap.dedent(
+            f"""\
     if test -t {sys.stdin.fileno()!s}; then
         stty intr ^c
         echo "SIGINT key changed back to to C-c!"
     else
         echo "Not currently connected to TTY! Cannot change SIGINT key"
     fi
-    """)
+    """
+        )
     )
 
 
 @contextmanager
 def change_path(
-    env_var: str, vals: List[Union[str, Path]], work_queue: List[str], sep: str = os.pathsep
+    env_var: str,
+    vals: List[Union[str, Path]],
+    work_queue: List[str],
+    sep: str = os.pathsep,
 ):
     """
     Extend the environment variable ENV_VAR with VALS.
@@ -201,16 +212,20 @@ def change_path(
     vals_to_add = map(val_to_str, vals)
     final_path = sep.join(vals_to_add) + sep + old_val
     work_queue.append(
-        textwrap.dedent(f"""\
+        textwrap.dedent(
+            f"""\
     export {old_env_var}="${env_var}"
     export {env_var}="{final_path}"
     echo "New state of \${env_var}: \"${env_var}\""
-    """)
+    """
+        )
     )
     yield
     work_queue.append(
-        textwrap.dedent(f"""\
+        textwrap.dedent(
+            f"""\
     export {env_var}="${old_env_var}"
     unset {old_env_var}
-    """)
+    """
+        )
     )

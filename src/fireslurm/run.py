@@ -59,6 +59,7 @@ def write_firesim_sh(
 
     poweroff -f
     """)
+
     logger.debug(f"Writing Firesim init script to {FIRESIM_SH}")
     with open(FIRESIM_SH, "w") as f:
         f.write(contents)
@@ -120,17 +121,21 @@ def flash_fpga(sim_config: Path) -> List[str]:
     ]
 
     flash_queue.append(
-        textwrap.dedent(f"""\
+        textwrap.dedent(
+            f"""\
     echo 'Flashing the FPGA. {FLASH_CMD=!s}'
     {" ".join(map(str, FLASH_CMD))}
-    """)
+    """
+        )
     )
 
     flash_queue.append(
-        textwrap.dedent(f"""\
+        textwrap.dedent(
+            f"""\
     echo 'Changing PCIe FPGA Permissions. {PCIE_PERMS_CMD=!s}'
     {" ".join(map(str, PCIE_PERMS_CMD))}
-    """)
+    """
+        )
     )
     return flash_queue
 
@@ -142,10 +147,12 @@ def overlay_disk_image(overlay_path: Path, sim_img: Path) -> List[str]:
     overlay_queue = []
     with utils.mount_img(sim_img.resolve(), overlay_queue) as mountpoint:
         overlay_queue.append(
-            textwrap.dedent(f"""\
+            textwrap.dedent(
+                f"""\
         echo "Overlaying contents of {overlay_path} onto {sim_img}"
         cp -r "{overlay_path.resolve()!s}" "${mountpoint!s}"
-        """)
+        """
+            )
         )
     return overlay_queue
 
@@ -173,10 +180,12 @@ def infrasetup(config: SlurmJobConfig) -> List[str]:
         # removing it causes simulations that do not start.
         sleep_time = 1  # In seconds
         infrasetup_queue.append(
-            textwrap.dedent(f"""\
+            textwrap.dedent(
+                f"""\
         echo "Sleeping for {sleep_time} seconds to let things stabilize"
         sleep {sleep_time!s}
-        """)
+        """
+            )
         )
     logger.debug("\n".join(infrasetup_queue))
     logger.info("Finished infrasetup")
@@ -256,10 +265,12 @@ def run_simulation(
         ),
     ):
         run_queue.append(
-            textwrap.dedent(f"""\
+            textwrap.dedent(
+                f"""\
         echo "Setting simulator's uartlog to {uartlog.resolve()}"
         script --command "{" ".join(fsim_cmd)!s}" "{uartlog.resolve()!s}"
-        """)
+        """
+            )
         )
     return run_queue
 
@@ -302,13 +313,14 @@ def build_run_tasks(config: SlurmJobConfig) -> List[str]:
         firesim_sh = write_firesim_sh(config.sim_config_path(), config.cmd)
         with utils.mount_img(config.sim_img.resolve(), run_queue) as mountpoint:
             run_queue.append(
-                textwrap.dedent(f"""\
+                textwrap.dedent(
+                    f"""\
             cp "{firesim_sh.resolve()!s}" "$MOUNT_IMG_TMP_DIR"
-            """)
+            """
+                )
             )
 
     log_dir_latest = update_log_files(config.log_dir, config.run_name)
-
     run_queue += infrasetup(config)
     run_queue += run_simulation(config, log_dir_latest)
     logger.debug(f"{run_queue=!s}")

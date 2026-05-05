@@ -94,10 +94,12 @@ def build_sync_parser(subparser) -> argparse.ArgumentParser:
         dest="infrasetup_target",
         required=True,
         type=Path,
-        help=inspect.cleandoc("""Path to the directory that firesim's infrasetup
+        help=inspect.cleandoc(
+            """Path to the directory that firesim's infrasetup
         command targeted.
         This directory should contain the driver-bundle.tar.gz and
-        firesim.tar.gz."""),
+        firesim.tar.gz."""
+        ),
     )
     return sync_parser
 
@@ -123,8 +125,10 @@ def build_run_parser(subparser) -> argparse.ArgumentParser:
         dest="print_start",
         action="store",
         default=-1,
-        help=inspect.cleandoc("""Clock cycle to begin emitting trace printing
-        from the core."""),
+        help=inspect.cleandoc(
+            """Clock cycle to begin emitting trace printing
+        from the core."""
+        ),
     )
     args.cmd(run_parser)
     args.dry_run(run_parser)
@@ -151,8 +155,10 @@ def build_batch_parser(subparser) -> argparse.ArgumentParser:
         dest="results_dir",
         required=True,
         type=Path,
-        help=inspect.cleandoc("""Path to where results extracted from FireSim's
-        outputs should be placed."""),
+        help=inspect.cleandoc(
+            """Path to where results extracted from FireSim's
+        outputs should be placed."""
+        ),
     )
     args.cmd(batch_parser)
     return batch_parser
@@ -173,9 +179,11 @@ def build_argparser() -> argparse.ArgumentParser:
         required=False,
         type=Path,
         default=Path("fireslurm.yaml"),
-        help=inspect.cleandoc("""Path to a FireSlurm configuration file.
+        help=inspect.cleandoc(
+            """Path to a FireSlurm configuration file.
         If unspecified, FireSlurm looks for fireslurm.yaml in the directory
-        FireSlurm was invoked from (the PWD)."""),
+        FireSlurm was invoked from (the PWD)."""
+        ),
     )
 
     args.verbose(parser)

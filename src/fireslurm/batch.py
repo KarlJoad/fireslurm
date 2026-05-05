@@ -37,7 +37,8 @@ def build_job_script_contents(
     # shell command. This means the empty string is effectively thrown away.
     verbose_flag = config.verbose_flag()
 
-    return textwrap.dedent(f"""\
+    return textwrap.dedent(
+        f"""\
     #!/usr/bin/env bash
     echo "Hello from $SLURM_JOB_ID"
     sleep 2
@@ -52,7 +53,8 @@ def build_job_script_contents(
             --sim-prog {config.sim_prog.resolve()!s} \\
             --log-dir {config.log_dir.resolve()!s} \\
             -- '{config.cmd!s}'
-    """)
+    """
+    )
 
 
 def submit_slurm_job(
