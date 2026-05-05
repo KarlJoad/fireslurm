@@ -167,7 +167,7 @@ def infrasetup(config: SlurmJobConfig) -> List[str]:
     # operation. Getting interrupted can leave the FPGA in such a borked state
     # that we have to reflash Firesim's controllers to the FPGA.
     with utils.block_sigint():
-        infrasetup_queue += flash_fpga(config.sim_config)
+        infrasetup_queue += flash_fpga(config.sim_config_path())
         infrasetup_queue += overlay_disk_image(config.overlay_path, config.sim_img)
 
         # XXX: We need a little bit of grace time between flashing the FPGA,
@@ -196,7 +196,7 @@ def build_firesim_cmd(
     """
     cmd = [
         "sudo",
-        f"{config.sim_config.resolve()}/FireSim-xilinx_vcu118",
+        f"{config.sim_config_path().resolve()}/FireSim-xilinx_vcu118",
         "+permissive",
         f"+blkdev0={config.sim_img.resolve()}",
         f"+blkdev-log0={config.log_dir.resolve()}/blkdev-log0",
@@ -253,7 +253,7 @@ def run_simulation(
         utils.change_path(
             "LD_LIBRARY_PATH",
             [
-                config.sim_config.resolve(),
+                config.sim_config_path().resolve(),
             ],
             run_queue,
         ),
@@ -298,7 +298,7 @@ def build_run_tasks(config: SlurmJobConfig) -> List[str]:
         logger.info(
             "You provided a command to use in firesim.sh. Building firesim.sh for automatic execution."
         )
-        firesim_sh = write_firesim_sh(config.sim_config, config.cmd)
+        firesim_sh = write_firesim_sh(config.sim_config_path(), config.cmd)
         with utils.mount_img(config.sim_img.resolve(), run_queue) as mountpoint:
             run_queue.append(
                 textwrap.dedent(f"""\
@@ -321,7 +321,7 @@ def run(config: RunConfig) -> JobInfo:
     run_tasks = build_run_tasks(config)
     logger.info(f"Running this job as interactive?: {config.is_interactive()}")
 
-    fireslurm_run = config.sim_config / f"fireslurm-run-{config.run_name!s}.sh"
+    fireslurm_run = config.sim_config_path() / f"fireslurm-run-{config.run_name!s}.sh"
     with open(fireslurm_run, "w") as s:
         s.write("\n".join(run_tasks))
         os.chmod(fireslurm_run, 0o775)

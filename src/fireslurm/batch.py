@@ -46,7 +46,7 @@ def build_job_script_contents(
             {verbose_flag!s} \\
             direct-run \\
             --run-name {config.run_name!s} \\
-            --sim-config {config.sim_config.resolve()!s} \\
+            --sim-config {config.sim_config_path().resolve()!s} \\
             --overlay-path {config.overlay_path.resolve()!s} \\
             --sim-img {config.sim_img.resolve()!s} \\
             --sim-prog {config.sim_prog.resolve()!s} \\
@@ -138,7 +138,7 @@ def batch(config: BatchConfig) -> JobInfo:
 
     batch_tasks = fireslurm.run.build_run_tasks(config)
 
-    job_file = config.sim_config / f"fireslurm-run-{config.run_name!s}.sh"
+    job_file = config.sim_config_path() / f"fireslurm-run-{config.run_name!s}.sh"
     with open(job_file, "w") as s:
         s.write("\n".join(batch_tasks))
         os.chmod(job_file, 0o775)

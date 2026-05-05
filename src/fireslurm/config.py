@@ -57,12 +57,25 @@ class FireSlurmConfig:
     overlay_path: Path
     """Path to directory to overlay on top of simulation disk image."""
 
-    sim_config: Path
+    config_dir: Path
     """
-    Path to the configuration directory of the simulation.
+    Path to the configuration directory holding simulation configurations.
 
     This should include the FPGA bitstream and the simulation driver.
     """
+
+    sim_config: str
+    """
+    Name of the simulation to run from the configuration directory.
+
+    This should include the FPGA bitstream and the simulation driver.
+    """
+
+    def sim_config_path(self) -> Path:
+        """
+        Return the path the selected configuration is located at.
+        """
+        return (self.config_dir / self.sim_config).resolve()
 
     sim_img: Path
     """Path to the simulation disk image."""
@@ -159,10 +172,14 @@ class FireSlurmConfig:
         """
         return all(
             [
-                validate.path_is_readable_dir(self.sim_config),
-                validate.path_is_readable_dir(self.sim_config / "xilinx_vcu118"),
-                validate.path_is_executable_file(self.sim_config / "FireSim-xilinx_vcu118"),
-                validate.path_is_readable_file(self.sim_config / "xilinx_vcu118" / "firesim.bit"),
+                validate.path_is_readable_dir(self.config_dir.resolve()),
+                validate.path_is_readable_dir(self.sim_config_path() / "xilinx_vcu118"),
+                validate.path_is_executable_file(
+                    self.sim_config_path() / "FireSim-xilinx_vcu118"
+                ),
+                validate.path_is_readable_file(
+                    self.sim_config_path() / "xilinx_vcu118" / "firesim.bit"
+                ),
             ]
         )
 

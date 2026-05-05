@@ -6,8 +6,11 @@
 # Where is directory whose contents should be overlaid on the disk image.
 overlay_path: !path "overlay"
 
+# Where are all the simulation configurations located
+config_dir: !path "configs"
+
 # Which configuration to use
-sim_config: !path "configs/latest"
+sim_config: !path "latest"
 
 # Path to the disk image the simulation should use.
 sim_img: !path "root.img"

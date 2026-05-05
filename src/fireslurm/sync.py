@@ -26,6 +26,9 @@ def build_config_dir(config_dir: Path, config_name: str) -> Path:
     """
     Build a configuration directory. Return the path to the latest
     configuration directory.
+
+    CONFIG_DIR should be the path to a directory that holds every simulation
+    configuration.
     """
     logger.debug("Synchronizing configuration files for current run")
     if not config_dir.exists():
@@ -91,7 +94,7 @@ def sync(config: SyncConfig) -> None:
     Synchronize the "firesim infrasetup" target's output to another location
     that FireSlurm can track and use to submit jobs to Slurm.
     """
-    config_dir = build_config_dir(config.sim_config, config.config_name)
+    config_dir = build_config_dir(config.config_dir, config.config_name)
 
     unzip_firesim_libs(config.infrasetup_target / "driver-bundle.tar.gz", config_dir)
     unzip_firesim_libs(config.infrasetup_target / "firesim.tar.gz", config_dir)
