@@ -288,7 +288,7 @@ class SlurmJobConfig(ABC, FireSlurmConfig):
     will be connected to the terminal presented by FireSim for interactive work.
     """
 
-    def is_interactive(self):
+    def is_interactive(self) -> bool:
         """
         Return True if this run configuration is an interactive job, i.e. a
         simulation job that should behave like a normal command line (be
