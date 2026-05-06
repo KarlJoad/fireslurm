@@ -29,6 +29,7 @@ requires = [
     "setuptools == 80.9.0",
     "uv_build >= 0.11.7",
     "pyyaml >= 6.0.3",
+    "pytest >= 8.4.2",
 ]
 build-backend = "uv_build"
 
