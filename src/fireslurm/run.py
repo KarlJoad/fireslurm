@@ -310,7 +310,7 @@ def build_run_tasks(config: SlurmJobConfig) -> List[str]:
         logger.info(
             "You provided a command to use in firesim.sh. Building firesim.sh for automatic execution."
         )
-        firesim_sh = write_firesim_sh(config.sim_config_path(), config.cmd)
+        firesim_sh = write_firesim_sh(config.sim_config_path(), config.cmd_script())
         with utils.mount_img(config.sim_img.resolve(), run_queue) as mountpoint:
             run_queue.append(
                 textwrap.dedent(

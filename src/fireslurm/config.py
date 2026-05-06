@@ -297,6 +297,40 @@ class SlurmJobConfig(ABC, FireSlurmConfig):
         """
         return self.cmd is None or self.cmd == ""
 
+    def cmd_script(self):
+        """
+        Return this SlurmJobConfig's cmd field as a newline-delimited string
+        appropriate for putting in a Bash script.
+
+        Throws an error if this is an interactive job (the command is `None').
+        """
+
+        def to_str(val) -> List[str]:
+            """
+            Convert the types that self.cmd can take to a sequence of strings.
+            """
+            match self.cmd:
+                # Handle Sequences first (but exclude str and bytes)
+                case list() | tuple() if not isinstance(self.cmd, (str, bytes)):
+                    return [str(item) for item in self.cmd]
+
+                # PathLike objects (converts Path -> str/bytes)
+                case os.PathLike():
+                    return [str(os.fspath(self.cmd))]
+
+                case bytes():
+                    return [val.decode("utf-8")]
+
+                case str():
+                    return [val]
+
+                case _:
+                    raise TypeError(f"Got unexpected type: {type(val)}")
+
+        assert not self.is_interactive(), 'Cannot "script-ify" an interactive job'
+        cmds = to_str(self.cmd)
+        return "\n".join(cmds)
+
     print_start: int = 0
     """
     Clock cycle the FireSim simulation should start printing at.
