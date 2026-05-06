@@ -3,7 +3,7 @@ Definition of and produces a single object that represents the user's requested
 configuration options.
 """
 
-from dataclasses import dataclass, asdict, field
+from dataclasses import dataclass, asdict, field, InitVar
 from pathlib import Path
 from typing import List, NewType
 from collections.abc import Sequence
@@ -147,10 +147,14 @@ class FireSlurmConfig:
     is happening across multiple FireSlurm runs across time.
     """
 
-    def __post_init__(self):
+    skip_validation: InitVar[bool] = False
+
+    def __post_init__(self, skip_validation: bool = False):
         """
         Validate that the FireSlurm configuration that was constructed is valid.
         """
+        if skip_validation:
+            return
         # We only validate the log directory, since that is the only thing that
         # must be valid for ALL kinds of jobs.
         assert self.validate_log_dir(), "Log directory is invalid"
@@ -274,7 +278,9 @@ class SyncConfig(FireSlurmConfig):
         # the sim_config directory (and its parents) for us.
         return True
 
-    def __post_init__(self):
+    def __post_init__(self, skip_validation: bool = False):
+        if skip_validation:
+            return
         assert self.validate_sim_config_target(), "Simulator config directory invalid"
 
 
@@ -385,7 +391,9 @@ class SlurmJobConfig(ABC, FireSlurmConfig):
         else:
             return False
 
-    def __post_init__(self):
+    def __post_init__(self, skip_validation: bool = False):
+        if skip_validation:
+            return
         assert self.validate_run_name(), "Run name is invalid"
         assert self.validate_sim_config_source(), "Simulator config directory invalid"
         assert self.validate_overlay(), "Overlay directory invalid"
@@ -400,7 +408,9 @@ class RunConfig(SlurmJobConfig):
     with "srun".
     """
 
-    def __post_init__(self):
+    def __post_init__(self, skip_validation: bool = False):
+        if skip_validation:
+            return
         assert self.validate_sim_config_source(), "Simulator config directory invalid"
         assert self.validate_overlay(), "Overlay directory invalid"
         assert self.validate_sim_img(), "Simulation disk image invalid"
@@ -426,7 +436,9 @@ class BatchConfig(SlurmJobConfig):
     with "sbatch".
     """
 
-    def __post_init__(self):
+    def __post_init__(self, skip_validation: bool = False):
+        if skip_validation:
+            return
         assert not self.is_interactive(), "Batch runs must have a command"
         assert self.validate_sim_config_source(), "Simulator config directory invalid"
         assert self.validate_overlay(), "Overlay directory invalid"
