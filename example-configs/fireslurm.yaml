@@ -24,6 +24,10 @@ sim_prog: !path "kernel.bin"
 # run.
 log_dir: !path "logs"
 
+# Path to the directory where Fireslurm should place results.
+# FIXME: How are results different than logs?
+results_dir: !path "results"
+
 # Slurm partitions to run these Fireslurm jobs on
 partitions: [ "firesim", ]
 

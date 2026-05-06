@@ -153,7 +153,7 @@ def build_batch_parser(subparser) -> argparse.ArgumentParser:
     batch_parser.add_argument(
         "--results-dir",
         dest="results_dir",
-        required=True,
+        required=False,
         type=Path,
         help=inspect.cleandoc(
             """Path to where results extracted from FireSim's
